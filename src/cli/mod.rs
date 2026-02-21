@@ -75,9 +75,9 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
             match service.check_updates() {
                 Ok(items) => {
                     if as_json {
-                        print_software_json(&items);
+                        print_update_json(&items);
                     } else {
-                        print_software_table(&items);
+                        print_update_table(&items);
                     }
                     Ok(EXIT_OK)
                 }
@@ -239,6 +239,39 @@ fn print_software_table(items: &[crate::domain::SoftwareItem]) {
         println!(
             "{}  {}  {}  {}",
             item.name, item.package_id, item.version, item.source
+        );
+    }
+}
+
+fn print_update_json(items: &[crate::domain::UpdateItem]) {
+    println!("[");
+    for (idx, item) in items.iter().enumerate() {
+        let comma = if idx + 1 == items.len() { "" } else { "," };
+        println!(
+            "  {{\"name\":\"{}\",\"package_id\":\"{}\",\"installed_version\":\"{}\",\"available_version\":\"{}\",\"source\":\"{}\"}}{}",
+            escape_json(&item.name),
+            escape_json(&item.package_id),
+            escape_json(&item.installed_version),
+            escape_json(&item.available_version),
+            escape_json(&item.source),
+            comma
+        );
+    }
+    println!("]");
+}
+
+fn print_update_table(items: &[crate::domain::UpdateItem]) {
+    if items.is_empty() {
+        println!("No entries found.");
+        return;
+    }
+
+    println!("name  package_id  installed_version  available_version  source");
+    println!("----  ----------  -----------------  -----------------  ------");
+    for item in items {
+        println!(
+            "{}  {}  {}  {}  {}",
+            item.name, item.package_id, item.installed_version, item.available_version, item.source
         );
     }
 }

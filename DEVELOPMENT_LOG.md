@@ -424,6 +424,34 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-21 – JSON Output Contract Stabilization
+
+### English
+
+- Separated update DTO from software DTO in Rust domain layer
+- `update check --json` now emits stable upgrade fields:
+- `name`
+- `package_id`
+- `installed_version`
+- `available_version`
+- `source`
+- Updated upgrade parsers and tests to preserve installed/available version semantics
+- Synced JSON field contract into CLI spec and interface specification
+
+### 中文
+
+- 在 Rust Domain 层将更新 DTO 与软件 DTO 解耦
+- `update check --json` 现在输出稳定升级字段：
+- `name`
+- `package_id`
+- `installed_version`
+- `available_version`
+- `source`
+- 更新升级解析器与测试，保持已安装/可用版本语义
+- 已将 JSON 字段契约同步到 CLI 规范与接口规范文档
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

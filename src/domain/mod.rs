@@ -7,6 +7,15 @@ pub struct SoftwareItem {
 }
 
 #[derive(Debug, Clone)]
+pub struct UpdateItem {
+    pub name: String,
+    pub package_id: String,
+    pub installed_version: String,
+    pub available_version: String,
+    pub source: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct UpdatePlan {
     pub package_id: String,
     pub confirmed: bool,

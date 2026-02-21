@@ -1,4 +1,4 @@
-use crate::domain::{SoftwareItem, UpdatePlan};
+use crate::domain::{SoftwareItem, UpdateItem, UpdatePlan};
 use crate::integration::{IntegrationError, WingetClient};
 use crate::security::SecurityGuard;
 
@@ -13,7 +13,7 @@ impl SoftwareService {
         self.winget.list_installed(&self.guard)
     }
 
-    pub fn check_updates(&self) -> Result<Vec<SoftwareItem>, IntegrationError> {
+    pub fn check_updates(&self) -> Result<Vec<UpdateItem>, IntegrationError> {
         self.winget.list_upgrades(&self.guard)
     }
 }

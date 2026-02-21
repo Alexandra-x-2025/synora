@@ -2,7 +2,7 @@ use std::process::Command;
 
 use serde_json::Value;
 
-use crate::domain::SoftwareItem;
+use crate::domain::{SoftwareItem, UpdateItem};
 use crate::security::{SecurityError, SecurityGuard};
 
 #[derive(Debug)]
@@ -45,7 +45,7 @@ impl WingetClient {
     pub fn list_upgrades(
         &self,
         guard: &SecurityGuard,
-    ) -> Result<Vec<SoftwareItem>, IntegrationError> {
+    ) -> Result<Vec<UpdateItem>, IntegrationError> {
         let cmd = vec![
             "winget".to_string(),
             "upgrade".to_string(),
@@ -147,7 +147,7 @@ fn parse_software_items(payload: &Value) -> Vec<SoftwareItem> {
     items
 }
 
-fn parse_upgrade_items(payload: &Value) -> Vec<SoftwareItem> {
+fn parse_upgrade_items(payload: &Value) -> Vec<UpdateItem> {
     let mut items = Vec::new();
 
     if let Some(sources) = payload.get("Sources").and_then(Value::as_array) {
@@ -244,7 +244,7 @@ fn parse_tabular_software_items(raw: &str) -> Vec<SoftwareItem> {
     items
 }
 
-fn parse_tabular_upgrade_items(raw: &str) -> Vec<SoftwareItem> {
+fn parse_tabular_upgrade_items(raw: &str) -> Vec<UpdateItem> {
     let mut items = Vec::new();
     let lines: Vec<&str> = raw.lines().collect();
 
@@ -296,14 +296,11 @@ fn parse_tabular_upgrade_items(raw: &str) -> Vec<SoftwareItem> {
             continue;
         }
 
-        items.push(SoftwareItem {
+        items.push(UpdateItem {
             name,
             package_id,
-            version: if available_version.is_empty() {
-                installed_version
-            } else {
-                format!("{installed_version} -> {available_version}")
-            },
+            installed_version,
+            available_version,
             source,
         });
     }
@@ -374,7 +371,7 @@ fn package_to_software_item(pkg: &Value) -> Option<SoftwareItem> {
     })
 }
 
-fn package_to_upgrade_item(pkg: &Value) -> Option<SoftwareItem> {
+fn package_to_upgrade_item(pkg: &Value) -> Option<UpdateItem> {
     let name = pick_string(pkg, &["Name", "PackageName"]);
     let package_id = pick_string(pkg, &["Id", "PackageIdentifier"]);
     let installed = pick_string(pkg, &["Version", "InstalledVersion"]);
@@ -385,18 +382,11 @@ fn package_to_upgrade_item(pkg: &Value) -> Option<SoftwareItem> {
         return None;
     }
 
-    let version = if available.is_empty() {
-        installed
-    } else if installed.is_empty() {
-        available
-    } else {
-        format!("{installed} -> {available}")
-    };
-
-    Some(SoftwareItem {
+    Some(UpdateItem {
         name,
         package_id,
-        version,
+        installed_version: installed,
+        available_version: available,
         source,
     })
 }
@@ -490,7 +480,8 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].name, "Git");
         assert_eq!(items[0].package_id, "Git.Git");
-        assert_eq!(items[0].version, "2.44.0 -> 2.45.0");
+        assert_eq!(items[0].installed_version, "2.44.0");
+        assert_eq!(items[0].available_version, "2.45.0");
     }
 
     #[test]
@@ -501,6 +492,7 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].name, "Git");
         assert_eq!(items[0].package_id, "Git.Git");
-        assert_eq!(items[0].version, "2.44.0 -> 2.45.0");
+        assert_eq!(items[0].installed_version, "2.44.0");
+        assert_eq!(items[0].available_version, "2.45.0");
     }
 }

@@ -29,6 +29,13 @@ Output:
 - Default: human-readable table
 - `--json`: machine-readable JSON array
 
+JSON minimum fields:
+- `name`
+- `package_id`
+- `installed_version`
+- `available_version`
+- `source`
+
 ### 1.3 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`
 
 Purpose:

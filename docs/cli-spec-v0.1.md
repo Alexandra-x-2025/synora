@@ -40,6 +40,13 @@ Purpose:
 Options:
 - `--json`: output structured JSON
 
+JSON contract (minimum keys per item):
+- `name`
+- `package_id`
+- `installed_version`
+- `available_version`
+- `source`
+
 Exit codes:
 - `0`: success
 - `4`: integration failure
