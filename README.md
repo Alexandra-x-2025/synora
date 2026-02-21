@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="assets/logo/synora-logo.png" width="200" />
+  <img src="assets/logo/synora-icon.png" width="180" />
 </p>
+
+# Synora
 
 # Synora
 
