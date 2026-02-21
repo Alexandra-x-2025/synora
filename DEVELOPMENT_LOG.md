@@ -400,6 +400,30 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-21 – Rust CLI Contract Tests (Step 3)
+
+### English
+
+- Added CLI contract unit tests in `src/cli/mod.rs`
+- Covered frozen behaviors:
+- missing `--id` returns `EXIT_USAGE (2)`
+- conflicting `--dry-run` and `--confirm` returns `EXIT_USAGE (2)`
+- `--yes` alias remains backward compatible
+- integration errors map to `EXIT_INTEGRATION (4)`
+- security errors map to `EXIT_SECURITY (3)`
+
+### 中文
+
+- 在 `src/cli/mod.rs` 增加 CLI 契约单元测试
+- 覆盖冻结行为：
+- 缺失 `--id` 返回 `EXIT_USAGE (2)`
+- `--dry-run` 与 `--confirm` 冲突返回 `EXIT_USAGE (2)`
+- `--yes` 别名保持向后兼容
+- 集成错误映射到 `EXIT_INTEGRATION (4)`
+- 安全错误映射到 `EXIT_SECURITY (3)`
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.
