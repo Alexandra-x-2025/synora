@@ -3,6 +3,11 @@
 This document records major architectural decisions.
 These decisions are stable unless explicitly revised.
 
+Status labels:
+- `Active`: currently enforced decision
+- `Superseded`: replaced by a newer decision
+- `Deprecated`: allowed temporarily, planned for removal
+
 ---
 
 # Synora – 架构决策记录
@@ -10,9 +15,17 @@ These decisions are stable unless explicitly revised.
 本文件记录关键架构决策。
 除非明确修订，否则视为稳定决策。
 
+状态标签：
+- `Active`：当前生效决策
+- `Superseded`：已被新决策替代
+- `Deprecated`：暂时保留、计划移除
+
 ---
 
 ## AD-001: Windows-First Architecture
+
+### Status
+Active
 
 ### Decision
 Synora is designed as a Windows-first software manager.
@@ -29,6 +42,9 @@ Cross-platform support is not a primary goal at this stage.
 
 ## AD-001：Windows 优先架构
 
+### 状态
+Active
+
 ### 决策
 Synora 以 Windows 平台为优先目标。
 
@@ -44,6 +60,9 @@ Synora 以 Windows 平台为优先目标。
 
 ## AD-002: Safety-First Philosophy
 
+### Status
+Active
+
 ### Decision
 All destructive operations must be reversible.
 
@@ -57,6 +76,9 @@ All destructive operations must be reversible.
 
 ## AD-002：安全优先原则
 
+### 状态
+Active
+
 ### 决策
 所有破坏性操作必须可恢复。
 
@@ -69,6 +91,9 @@ All destructive operations must be reversible.
 ---
 
 ## AD-003: Layered Architecture
+
+### Status
+Active
 
 ### Decision
 Synora follows a strict layered design:
@@ -90,6 +115,9 @@ Domain
 
 ## AD-003：分层架构
 
+### 状态
+Active
+
 ### 决策
 Synora 采用严格分层结构：
 
@@ -110,6 +138,9 @@ Domain
 
 ## AD-004: Security Guard Mandatory
 
+### Status
+Active
+
 ### Decision
 All system-level operations must pass Security Guard.
 
@@ -124,6 +155,9 @@ No direct shell execution allowed.
 ---
 
 ## AD-004：强制安全守卫
+
+### 状态
+Active
 
 ### 决策
 所有系统级操作必须通过 Security Guard。
@@ -140,6 +174,9 @@ No direct shell execution allowed.
 
 ## AD-005: Terminal-First Interface
 
+### Status
+Active
+
 ### Decision
 Synora will prioritize CLI before GUI.
 
@@ -154,6 +191,9 @@ GUI may be added later.
 ---
 
 ## AD-005：终端优先策略
+
+### 状态
+Active
 
 ### 决策
 Synora 优先实现 CLI。
@@ -170,6 +210,9 @@ GUI 未来可扩展。
 
 ## AD-006: Code Storage & Tooling Strategy
 
+### Status
+Active
+
 ### Decision
 - Code stored on Windows filesystem
 - AI tooling runs in WSL
@@ -181,6 +224,9 @@ Avoid Windows network port conflicts and preserve native behavior.
 ---
 
 ## AD-006：代码与工具链策略
+
+### 状态
+Active
 
 ### 决策
 - 代码放在 Windows 文件系统

@@ -1,0 +1,131 @@
+# Synora -- Interface & Module Specification (Frozen v0.1)
+
+# Synora -- 接口与模块规范（冻结版 v0.1）
+
+Last updated: 2026-02-21
+Status: Frozen for v0.1
+
+---
+
+## 1. CLI Contract / CLI 契约
+
+Executable: `synora`
+
+### 1.1 `synora software list [--json]`
+
+Purpose:
+- Enumerate installed software.
+
+Output:
+- Default: human-readable table
+- `--json`: machine-readable JSON array
+
+### 1.2 `synora update check [--json]`
+
+Purpose:
+- Detect available updates.
+
+Output:
+- Default: human-readable table
+- `--json`: machine-readable JSON array
+
+### 1.3 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`
+
+Purpose:
+- Create or confirm update plan for one package.
+
+Rules:
+- Default mode is plan-only (`--dry-run` semantics).
+- `--confirm` marks explicit user confirmation for high-risk path.
+- v0.1 remains plan-only execution (no real installer run yet).
+- `--json` returns structured plan payload.
+
+JSON minimum fields:
+- `package_id`
+- `risk`
+- `requested_mode`
+- `mode`
+- `message`
+
+Compatibility:
+- Legacy flag `--yes` is accepted as alias of `--confirm`.
+
+### 1.4 `synora config init`
+
+Purpose:
+- Initialize local configuration file.
+
+---
+
+## 2. Error Code Contract / 错误码契约
+
+- `0`: success
+- `2`: invalid usage / invalid argument
+- `3`: security policy blocked
+- `4`: integration/runtime failure
+- `10`: unexpected internal failure
+
+Integration rule:
+- External command non-zero exit must map to `4` (not silent empty result).
+
+---
+
+## 3. Module Boundaries / 模块边界
+
+### 3.1 Domain
+
+Responsibilities:
+- Data models
+- Risk classification
+
+Constraints:
+- No IO
+- No system calls
+
+### 3.2 Repository
+
+Responsibilities:
+- Local config/data persistence
+- Future SQLite access layer
+
+### 3.3 Service
+
+Responsibilities:
+- Workflow orchestration
+- Policy coordination across Domain + Integration
+
+### 3.4 Worker
+
+Responsibilities:
+- Retry execution
+- Future concurrency and cancellation hooks
+
+### 3.5 Integration
+
+Responsibilities:
+- External system adapters (winget, registry, filesystem)
+
+### 3.6 Security Guard
+
+Responsibilities:
+- Command allowlist enforcement
+- Pre-execution validation
+- Final mandatory boundary for system-level actions
+
+---
+
+## 4. Cross-Module Rules / 跨模块规则
+
+- Domain cannot call Integration directly.
+- Service coordinates Domain + Repository + Integration.
+- Integration must route risky system actions via Security Guard.
+- CLI layer does not bypass Service or Security Guard.
+
+---
+
+## 5. Stability Rules / 稳定性规则
+
+For `v0.1`:
+- Command names and exit codes are frozen.
+- Breaking changes require new spec version section.
+- New flags must remain backward compatible.

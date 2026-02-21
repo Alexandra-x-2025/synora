@@ -1,6 +1,6 @@
 # Synora CLI Specification v0.1
 
-Status: Draft Accepted  
+Status: Frozen  
 Scope: Phase 1 CLI MVP baseline
 
 ## 1. Goals
@@ -29,6 +29,9 @@ Exit codes:
 - `0`: success
 - `4`: integration failure
 
+Failure semantics:
+- If source invocation fails (for example `winget` non-zero exit), command must return `4`.
+
 ### 2.2 `synora update check`
 
 Purpose:
@@ -41,15 +44,26 @@ Exit codes:
 - `0`: success
 - `4`: integration failure
 
-### 2.3 `synora update apply --id <package_id> [--yes]`
+Failure semantics:
+- If source invocation fails (for example `winget` non-zero exit), command must return `4`.
+
+### 2.3 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`
 
 Purpose:
 - Prepare a safe update plan for a specific package.
 
 Behavior:
-- Without `--yes`, returns a dry-run plan only.
-- With `--yes`, still validated by Security Guard.
+- Default behavior returns a dry-run plan.
+- `--confirm` marks explicit user confirmation for high-risk path.
+- Legacy `--yes` is accepted as alias of `--confirm`.
 - v0.1 does not perform real installer execution yet.
+
+JSON contract (minimum keys):
+- `package_id`
+- `risk`
+- `requested_mode`
+- `mode`
+- `message`
 
 Exit codes:
 - `0`: plan generated

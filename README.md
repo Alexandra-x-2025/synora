@@ -108,6 +108,88 @@ v0.x – CLI MVP
 v1.x – Stable CLI  
 v2.x – Extended sources & intelligence  
 
+Current: Phase 1 (CLI MVP in progress)
+
+CLI spec: `docs/cli-spec-v0.1.md`
+
+---
+
+## 🧪 CLI v0.1 Commands
+
+`synora software list [--json]`  
+`synora update check [--json]`  
+`synora update apply --id <package_id> [--dry-run | --confirm] [--json]`  
+`synora config init`
+
+Compatibility: `--yes` is still accepted as an alias of `--confirm`.
+
+---
+
+## 📁 Project Structure
+
+```
+synora/
+├── README.md
+├── LICENSE
+├── CHANGELOG.md
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── PROJECT_STATE.md
+├── ARCHITECTURE_DECISIONS.md
+├── DEVELOPMENT_LOG.md
+├── assets/
+│   └── logo/
+├── docs/
+│   ├── architecture/
+│   ├── security/
+│   ├── testing/
+│   ├── product/
+│   ├── roadmap.md
+│   └── architecture-overview.md
+├── src/
+├── tests/
+└── .github/
+```
+
+---
+
+## 🧠 Structure Rationale
+
+Root:
+- Governance files: `README`, `SECURITY`, `CONTRIBUTING`
+- State and decision files: `PROJECT_STATE`, `ARCHITECTURE_DECISIONS`
+- Development timeline: `DEVELOPMENT_LOG`
+
+`docs/architecture/`:
+- Core technical documents
+- Design plans, interface contracts, data design, tech stack
+
+`docs/security/`:
+- Security threat model and future audit reports
+
+`docs/testing/`:
+- Testing strategy and CI/QA approach
+
+`docs/product/`:
+- Product strategy and roadmap artifacts
+
+---
+
+## 📁 项目结构说明
+
+根目录放置：
+- 治理类文件（`README` / `SECURITY` / `CONTRIBUTING`）
+- 状态与决策文件（`PROJECT_STATE` / `ARCHITECTURE_DECISIONS`）
+- 开发日志（`DEVELOPMENT_LOG`）
+
+这些属于“项目元信息”。
+
+`docs/` 分层：
+- `architecture/`：核心技术文档（设计书、接口规范、数据设计、技术选型）
+- `security/`：威胁模型与后续审计类文档
+- `testing/`：测试与 CI/QA 策略
+- `product/`：产品战略与路线图
+
 ---
 
 ## 🚀 路线图

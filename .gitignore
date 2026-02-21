@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local runtime artifacts
+.synora/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+
+# Rust build artifacts
+target/
