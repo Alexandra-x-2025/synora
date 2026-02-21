@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synora Icon (SVG) - clean, scalable, no external deps -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Synora shield icon">
+  <defs>
+    <!-- Deep-blue base + subtle vertical sheen -->
+    <linearGradient id="gBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#0b1e3a"/>
+      <stop offset="55%" stop-color="#0a1730"/>
+      <stop offset="100%" stop-color="#071225"/>
+    </linearGradient>
+
+    <!-- Inner panel gradient -->
+    <linearGradient id="gInner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#0f2b54"/>
+      <stop offset="100%" stop-color="#0a1a34"/>
+    </linearGradient>
+
+    <!-- Soft glow for the terminal glyph -->
+    <filter id="fGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clip to shield shape for highlights -->
+    <clipPath id="clipShield">
+      <path id="shieldPath" d="
+        M256 46
+        C205 46 166 66 136 82
+        C117 92 101 100 86 104
+        V222
+        C86 326 155 412 256 466
+        C357 412 426 326 426 222
+        V104
+        C411 100 395 92 376 82
+        C346 66 307 46 256 46
+        Z" />
+    </clipPath>
+  </defs>
+
+  <!-- Outer shield -->
+  <use href="#shieldPath" fill="url(#gBase)"/>
+  <use href="#shieldPath" fill="none" stroke="#153a73" stroke-width="10" opacity="0.9"/>
+
+  <!-- Subtle top-left highlight (clipped) -->
+  <g clip-path="url(#clipShield)" opacity="0.35">
+    <path d="M-40 120 C120 0, 240 40, 420 -40 L520 60 C330 150, 210 140, 40 260 Z"
+          fill="#2b6bd8"/>
+  </g>
+
+  <!-- Inner panel -->
+  <path d="
+    M256 92
+    C216 92 184 107 159 121
+    C144 130 131 137 120 140
+    V222
+    C120 306 176 376 256 421
+    C336 376 392 306 392 222
+    V140
+    C381 137 368 130 353 121
+    C328 107 296 92 256 92
+    Z"
+    fill="url(#gInner)" stroke="#1c4a92" stroke-width="6" opacity="0.98"/>
+
+  <!-- Terminal glyph: >_ -->
+  <g filter="url(#fGlow)">
+    <!-- caret ">" -->
+    <path d="M214 238 L278 270 L214 302" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- underscore "_" -->
+    <path d="M290 312 H338" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+  </g>
+
+  <!-- Tiny accent dots (optional, very subtle) -->
+  <g opacity="0.22">
+    <circle cx="206" cy="186" r="6" fill="#7fb1ff"/>
+    <circle cx="316" cy="176" r="4" fill="#7fb1ff"/>
+    <circle cx="344" cy="214" r="3" fill="#7fb1ff"/>
+  </g>
+</svg>
