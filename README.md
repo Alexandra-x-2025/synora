@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/synora-logo.png" width="200" />
+</p>
+
 # Synora
 
 Intelligent terminal-first software manager for Windows, focused on safety, transparency, and recoverability.
