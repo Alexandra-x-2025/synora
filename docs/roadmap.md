@@ -10,7 +10,7 @@ Synora 按阶段稳步演进。
 
 ---
 
-## Phase 0 – Bootstrap (Current)
+## Phase 0 – Bootstrap (Completed)
 
 - Repository structure
 - Documentation
@@ -19,7 +19,7 @@ Synora 按阶段稳步演进。
 
 ---
 
-## 阶段 0 – 项目初始化（当前阶段）
+## 阶段 0 – 项目初始化（已完成）
 
 - 仓库结构搭建
 - 文档体系建立
@@ -35,6 +35,10 @@ Synora 按阶段稳步演进。
 - Safe update execution
 - Quarantine cleanup
 - Basic registry backup
+- CLI specification v0.1
+- CLI command skeleton (`software list`, `update check`, `update apply`, `config init`)
+
+Status: In progress
 
 ---
 
@@ -45,6 +49,10 @@ Synora 按阶段稳步演进。
 - 安全更新执行
 - 隔离清理
 - 基础注册表备份
+- CLI v0.1 规范
+- CLI 命令骨架（`software list`、`update check`、`update apply`、`config init`）
+
+状态：进行中
 
 ---
 

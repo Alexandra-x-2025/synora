@@ -1,0 +1,106 @@
+# Synora CLI Specification v0.1
+
+Status: Draft Accepted  
+Scope: Phase 1 CLI MVP baseline
+
+## 1. Goals
+
+Synora CLI v0.1 provides a safety-first command interface for Windows software lifecycle tasks.
+
+Design priorities:
+- Explicit user control
+- Explainable output
+- Recoverable operations
+- Security guard as mandatory boundary
+
+## 2. Command Set
+
+Executable name: `synora`
+
+### 2.1 `synora software list`
+
+Purpose:
+- List installed software from supported sources.
+
+Options:
+- `--json`: output structured JSON
+
+Exit codes:
+- `0`: success
+- `4`: integration failure
+
+### 2.2 `synora update check`
+
+Purpose:
+- Check available updates for installed software.
+
+Options:
+- `--json`: output structured JSON
+
+Exit codes:
+- `0`: success
+- `4`: integration failure
+
+### 2.3 `synora update apply --id <package_id> [--yes]`
+
+Purpose:
+- Prepare a safe update plan for a specific package.
+
+Behavior:
+- Without `--yes`, returns a dry-run plan only.
+- With `--yes`, still validated by Security Guard.
+- v0.1 does not perform real installer execution yet.
+
+Exit codes:
+- `0`: plan generated
+- `2`: invalid input
+- `3`: security policy violation
+
+### 2.4 `synora config init`
+
+Purpose:
+- Create initial config file in user profile.
+
+Exit codes:
+- `0`: success
+
+## 3. Global Behavior
+
+### 3.1 Logging
+- Log file location: `~/.synora/logs/synora.log`
+- Override root directory with env var: `SYNORA_HOME`
+- Minimum fields: timestamp, level, message
+
+### 3.2 Output Modes
+- Human-readable text by default
+- Machine-readable JSON via `--json`
+
+### 3.3 Error Contract
+
+Common exit codes:
+- `0`: success
+- `2`: invalid usage or argument
+- `3`: security blocked
+- `4`: integration/runtime failure
+- `10`: unexpected internal error
+
+## 4. Security Rules (v0.1)
+
+Aligned with AD-002 and AD-004:
+- No arbitrary shell command execution
+- All system interactions must go through Security Guard
+- High-risk actions require explicit user confirmation
+- Destructive cleanup actions remain non-destructive in MVP
+
+## 5. Non-Goals (v0.1)
+
+Not included in v0.1:
+- Full uninstall workflow
+- Real quarantine file mover
+- Registry backup execution
+- GUI interface
+
+## 6. Versioning
+
+This file defines baseline behavior for `v0.1`.
+Future versions must preserve backward compatibility or document breaking changes.
