@@ -1170,3 +1170,17 @@ Examples:
 - 在 quarantine 执行设计书增加快速入口：
 - 运行边界说明
 - 最终签署决策包
+
+---
+
+## 2026-02-22 – Push Workflow Docs-Only Fast Path Added
+
+### English
+
+- Updated `docs/Push_Workflow_Standard.md`
+- Added docs-only fast path to skip unnecessary cargo checks for markdown-only pushes
+
+### 中文
+
+- 更新 `docs/Push_Workflow_Standard.md`
+- 增加 docs-only 快速流程，文档提交可跳过不必要的 cargo 检查

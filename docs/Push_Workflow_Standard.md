@@ -16,6 +16,16 @@ If code changed, also run:
 1. `cargo check`
 2. `cargo test`
 
+Docs-only fast path:
+
+Use when staged files are documentation-only (for example `*.md`, `docs/**`, governance docs).
+
+1. `git status --short`
+2. `git diff --name-only --cached` (verify docs-only scope)
+3. `git log --oneline --decorate -n 10`
+
+No `cargo check` / `cargo test` required in docs-only fast path.
+
 ## 2. Staging Rules
 
 - Stage only files related to the target change.
