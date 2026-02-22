@@ -118,7 +118,18 @@ Notes:
 - Validates `update apply` persistence behavior for planned operations.
 - Does not modify system state.
 
-### 2.7 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
+### 2.7 `synora config audit-summary [--json]` (Phase 2 Audit Utility)
+
+Purpose:
+- Read aggregated update audit metrics from SQLite `update_history`.
+
+Fields:
+- `total`
+- `planned_confirmed`
+- `planned_dry_run`
+- `latest_timestamp` (nullable)
+
+### 2.8 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.

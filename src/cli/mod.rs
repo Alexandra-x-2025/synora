@@ -282,6 +282,29 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 }
             }
         }
+        "audit-summary" => {
+            let as_json = args.iter().any(|v| v == "--json");
+            if args.len() > 2 || (args.len() == 2 && !as_json) {
+                print_config_help();
+                return Ok(EXIT_USAGE);
+            }
+
+            let db_repo = DatabaseRepository::default();
+            match db_repo.get_update_audit_summary() {
+                Ok(summary) => {
+                    if as_json {
+                        print_db_update_audit_summary_json(&summary);
+                    } else {
+                        print_db_update_audit_summary_table(&summary);
+                    }
+                    Ok(EXIT_OK)
+                }
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    Ok(EXIT_INTEGRATION)
+                }
+            }
+        }
         _ => {
             print_config_help();
             Ok(EXIT_USAGE)
@@ -443,6 +466,7 @@ fn print_config_help() {
     println!("Usage: synora config init");
     println!("   or: synora config db-list [--json]");
     println!("   or: synora config history-list [--json]");
+    println!("   or: synora config audit-summary [--json]");
 }
 
 fn print_source_help() {
@@ -524,6 +548,28 @@ fn print_db_update_history_table(items: &[crate::repository::UpdateHistoryRow]) 
             item.status
         );
     }
+}
+
+fn print_db_update_audit_summary_json(summary: &crate::repository::UpdateAuditSummary) {
+    let latest = summary
+        .latest_timestamp
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "null".to_string());
+    println!(
+        "{{\"total\":{},\"planned_confirmed\":{},\"planned_dry_run\":{},\"latest_timestamp\":{}}}",
+        summary.total, summary.planned_confirmed, summary.planned_dry_run, latest
+    );
+}
+
+fn print_db_update_audit_summary_table(summary: &crate::repository::UpdateAuditSummary) {
+    let latest = summary
+        .latest_timestamp
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "none".to_string());
+    println!("total: {}", summary.total);
+    println!("planned_confirmed: {}", summary.planned_confirmed);
+    println!("planned_dry_run: {}", summary.planned_dry_run);
+    println!("latest_timestamp: {latest}");
 }
 
 fn print_source_suggestions_json(items: &[crate::domain::SourceRecommendation]) {
@@ -647,6 +693,13 @@ mod tests {
     #[test]
     fn config_history_list_rejects_unknown_flag() {
         let code = dispatch(&args(&["config", "history-list", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_audit_summary_rejects_unknown_flag() {
+        let code = dispatch(&args(&["config", "audit-summary", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }

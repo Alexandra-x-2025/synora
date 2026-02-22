@@ -85,6 +85,14 @@ pub struct UpdateHistoryRow {
     pub status: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateAuditSummary {
+    pub total: i64,
+    pub planned_confirmed: i64,
+    pub planned_dry_run: i64,
+    pub latest_timestamp: Option<i64>,
+}
+
 impl DatabaseRepository {
     pub fn resolved_db_path(&self) -> Result<PathBuf, RepositoryError> {
         if let Some(path) = &self.db_path {
@@ -250,6 +258,33 @@ impl DatabaseRepository {
         Ok(items)
     }
 
+    pub fn get_update_audit_summary(&self) -> Result<UpdateAuditSummary, RepositoryError> {
+        let db_path = self.init_schema()?;
+        let conn = Connection::open(db_path)?;
+
+        let summary = conn.query_row(
+            "
+            SELECT
+                COUNT(*) AS total,
+                COALESCE(SUM(CASE WHEN status = 'planned_confirmed' THEN 1 ELSE 0 END), 0) AS planned_confirmed,
+                COALESCE(SUM(CASE WHEN status = 'planned_dry_run' THEN 1 ELSE 0 END), 0) AS planned_dry_run,
+                MAX(timestamp) AS latest_timestamp
+            FROM update_history
+            ",
+            [],
+            |row| {
+                Ok(UpdateAuditSummary {
+                    total: row.get(0)?,
+                    planned_confirmed: row.get(1)?,
+                    planned_dry_run: row.get(2)?,
+                    latest_timestamp: row.get(3)?,
+                })
+            },
+        )?;
+
+        Ok(summary)
+    }
+
     pub fn add_quarantine_entry(
         &self,
         software_id: i64,
@@ -378,6 +413,14 @@ mod tests {
         assert_eq!(history[0].status, "success");
         assert_eq!(history[0].old_version, "2.44.0");
         assert_eq!(history[0].new_version, "2.45.0");
+
+        let summary = repo
+            .get_update_audit_summary()
+            .expect("summary query should succeed");
+        assert_eq!(summary.total, 1);
+        assert_eq!(summary.planned_confirmed, 0);
+        assert_eq!(summary.planned_dry_run, 0);
+        assert_eq!(summary.latest_timestamp, Some(1_700_000_000));
 
         let _ = fs::remove_dir_all(root);
     }

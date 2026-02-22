@@ -90,7 +90,12 @@ Purpose:
 Purpose:
 - Read-only listing of persisted `update_history` audit events from SQLite repository.
 
-### 1.7 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
+### 1.7 `synora config audit-summary [--json]` (Phase 2 utility)
+
+Purpose:
+- Read-only aggregate metrics from `update_history` for operational diagnostics.
+
+### 1.8 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
 
 Purpose:
 - Produce source recommendation candidates with score and reasons.
