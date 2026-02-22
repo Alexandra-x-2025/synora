@@ -6,6 +6,12 @@ Date: 2026-02-22
 Status: Draft v0.2 (Aligned with Phase 3 M1-M4 simulation implementation)
 Scope: Simulation path implemented; real mutation path remains gated
 
+Reader quick links:
+- Runtime capability boundary:
+- `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
+- Real mutation final decision pack:
+- `docs/security/Synora_Real_Mutation_Gate_Final_Signoff_Pack.md`
+
 ---
 
 ## 1. Goals / 目标

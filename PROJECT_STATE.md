@@ -34,6 +34,8 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - Phase 1 MVP readiness checklist: Completed
 - Phase 2 weekly plan (Week 1-4): Completed
 - Phase 3 quarantine simulation gate: Ready for Security Sign-off
+- Runtime capability boundary note:
+- `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
 
 ---
 
@@ -51,6 +53,8 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - Phase 1 MVP 就绪检查：已完成
 - Phase 2 周计划（Week 1-4）：已完成
 - Phase 3 quarantine 模拟门禁：已进入 Security 签署准备
+- 运行能力边界说明：
+- `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
 
 ---
 
@@ -100,7 +104,7 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 
 - Define Phase 3 entry criteria and stability gates
 - Complete Security sign-off for quarantine gate
-- Design real quarantine execution path with rollback boundary
+- Finalize real mutation gate decision (enable or keep disabled)
 - Design registry backup lifecycle (retention, integrity, restore checkpoints)
 - Prepare plugin-like source adapter contract draft
 
@@ -108,6 +112,6 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 
 - 定义 Phase 3 准入标准与稳定性门禁
 - 完成 quarantine 门禁的 Security 签署
-- 设计具备回滚边界的 quarantine 实际执行路径
+- 完成真实变更开关最终决策（启用或保持关闭）
 - 设计注册表备份生命周期（保留、完整性、恢复检查点）
 - 准备插件式来源适配器契约草案

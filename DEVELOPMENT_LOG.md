@@ -1152,3 +1152,21 @@ Examples:
 - 明确区分：
 - 当前可用的 simulation/audit 能力
 - 仍受门禁控制的真实变更能力
+
+---
+
+## 2026-02-22 – State and Design Entry Links Aligned
+
+### English
+
+- Added direct boundary-note link to `PROJECT_STATE.md`
+- Added quick links in quarantine execution design for:
+- runtime boundary note
+- final sign-off pack
+
+### 中文
+
+- 在 `PROJECT_STATE.md` 增加运行边界说明直达链接
+- 在 quarantine 执行设计书增加快速入口：
+- 运行边界说明
+- 最终签署决策包
