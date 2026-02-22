@@ -846,3 +846,27 @@ Examples:
 - `registry_backup`
 - `quarantine`
 - 增加 confirmed precheck 持久化路径的测试覆盖
+
+---
+
+## 2026-02-22 – Phase 3 M3: Confirm Simulated Execution Path
+
+### English
+
+- Promoted confirmed cleanup flow from precheck-only to simulated execution stage
+- Confirmed path now:
+- persists `quarantine_confirmed`
+- records simulated success `quarantine_success`
+- sets `mutation_boundary_reached = true`
+- Kept safety posture:
+- still no real filesystem/registry mutation in runtime
+
+### 中文
+
+- 将 confirmed cleanup 流程从仅 precheck 提升到模拟执行阶段
+- confirmed 路径现在会：
+- 持久化 `quarantine_confirmed`
+- 记录模拟成功状态 `quarantine_success`
+- 设置 `mutation_boundary_reached = true`
+- 保持安全策略：
+- 运行时仍不做真实文件/注册表变更

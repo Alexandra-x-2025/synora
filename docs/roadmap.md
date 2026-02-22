@@ -127,6 +127,8 @@ Kickoff update:
 - `cleanup quarantine` CLI skeleton + dry-run audit persistence (`quarantine_planned`)
 - M2 implementation started:
 - confirmed precheck path persists `quarantine_confirmed` and safety evidence placeholders (`registry_backup` / `quarantine`) without crossing mutation boundary
+- M3 implementation started:
+- confirmed path now records simulated execution success (`quarantine_success`) and marks mutation boundary reached
 
 ---
 
@@ -153,3 +155,5 @@ Kickoff update:
 - `cleanup quarantine` CLI 骨架与 dry-run 审计持久化（`quarantine_planned`）
 - 已启动 M2 实现：
 - confirmed precheck 路径写入 `quarantine_confirmed` 与安全证据占位（`registry_backup` / `quarantine`），但不跨越变更边界
+- 已启动 M3 实现：
+- confirmed 路径记录模拟执行成功（`quarantine_success`），并标记已到达变更边界

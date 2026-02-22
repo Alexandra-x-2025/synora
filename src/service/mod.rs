@@ -183,10 +183,10 @@ impl CleanupService {
         })
     }
 
-    pub fn persist_cleanup_plan(
+    pub fn execute_cleanup_plan(
         &self,
-        plan: &CleanupPlan,
-    ) -> Result<usize, crate::repository::RepositoryError> {
+        mut plan: CleanupPlan,
+    ) -> Result<(CleanupPlan, usize), crate::repository::RepositoryError> {
         let software_id = self.repo.upsert_software(
             &plan.package_id,
             "unknown",
@@ -203,24 +203,31 @@ impl CleanupService {
         let mut written = 1usize;
 
         if plan.requested_mode == "confirm" {
-            // M2 precheck evidence only, still no mutation.
+            // M3 still uses simulated execution, but crosses mutation boundary explicitly.
             self.repo.add_registry_backup(
                 "HKLM",
                 &format!("Software\\Synora\\Cleanup\\{}", plan.package_id),
-                "{\"mode\":\"cleanup_confirm_precheck\"}",
+                "{\"mode\":\"cleanup_confirm_simulated_execution\"}",
                 timestamp,
             )?;
             self.repo.add_quarantine_entry(
                 software_id,
-                &format!("precheck://{}", plan.package_id),
+                &format!("simulate://{}", plan.package_id),
                 "N/A",
                 timestamp,
-                "cleanup_confirm_precheck_placeholder",
+                "cleanup_confirm_simulated_execution",
             )?;
             written += 2;
+
+            plan.mutation_boundary_reached = true;
+            plan.status = "quarantine_success".to_string();
+            plan.message = "phase3 m3: simulated mutation succeeded".to_string();
+            self.repo
+                .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
+            written += 1;
         }
 
-        Ok(written)
+        Ok((plan, written))
     }
 }
 
@@ -427,10 +434,12 @@ mod tests {
         let plan = service
             .plan_quarantine("Git.Git", false, true)
             .expect("plan_quarantine should succeed");
-        let written = service
-            .persist_cleanup_plan(&plan)
-            .expect("persist_cleanup_plan should succeed");
+        let (result, written) = service
+            .execute_cleanup_plan(plan)
+            .expect("execute_cleanup_plan should succeed");
         assert_eq!(written, 1);
+        assert!(!result.mutation_boundary_reached);
+        assert_eq!(result.status, "quarantine_planned");
 
         let conn = Connection::open(db_path).expect("db should open");
         let count: i64 = conn
@@ -458,20 +467,31 @@ mod tests {
         let plan = service
             .plan_quarantine("Git.Git", true, false)
             .expect("plan_quarantine should succeed");
-        let written = service
-            .persist_cleanup_plan(&plan)
-            .expect("persist_cleanup_plan should succeed");
-        assert_eq!(written, 3);
+        let (result, written) = service
+            .execute_cleanup_plan(plan)
+            .expect("execute_cleanup_plan should succeed");
+        assert_eq!(written, 4);
+        assert!(result.mutation_boundary_reached);
+        assert_eq!(result.status, "quarantine_success");
 
         let conn = Connection::open(db_path).expect("db should open");
-        let status_count: i64 = conn
+        let confirmed_count: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_confirmed'",
                 [],
                 |row| row.get(0),
             )
             .expect("status count query should succeed");
-        assert_eq!(status_count, 1);
+        assert_eq!(confirmed_count, 1);
+
+        let success_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_success'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("success count query should succeed");
+        assert_eq!(success_count, 1);
 
         let backup_count: i64 = conn
             .query_row("SELECT COUNT(*) FROM registry_backup", [], |row| row.get(0))

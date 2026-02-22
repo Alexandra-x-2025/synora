@@ -269,8 +269,8 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
             return Ok(EXIT_USAGE);
         }
     };
-    let written = match service.persist_cleanup_plan(&plan) {
-        Ok(count) => count,
+    let (plan, written) = match service.execute_cleanup_plan(plan) {
+        Ok(result) => result,
         Err(err) => {
             eprintln!("Integration failure: failed to persist cleanup plan: {err}");
             return Ok(EXIT_INTEGRATION);

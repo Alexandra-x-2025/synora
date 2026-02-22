@@ -40,4 +40,4 @@ Quick regression checks for CLI contract and integration behavior.
 12. Returns JSON object with audit aggregates (`total`, `planned_confirmed`, `planned_dry_run`, `latest_timestamp`).
 13. Returns JSON array of source recommendations (can be empty).
 14. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
-15. Returns JSON object for cleanup confirm-precheck with `status: "quarantine_confirmed"` and `mutation_boundary_reached: false`.
+15. Returns JSON object for cleanup confirm simulated execution with `status: "quarantine_success"` and `mutation_boundary_reached: true`.
