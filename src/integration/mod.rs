@@ -11,6 +11,13 @@ pub enum IntegrationError {
     CommandFailed(String),
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum ParsePath {
+    Json,
+    TextFallback,
+    UnsupportedPlatform,
+}
+
 #[derive(Default, Clone, Copy)]
 pub struct WingetClient;
 
@@ -18,7 +25,7 @@ impl WingetClient {
     pub fn list_installed(
         &self,
         guard: &SecurityGuard,
-    ) -> Result<Vec<SoftwareItem>, IntegrationError> {
+    ) -> Result<(Vec<SoftwareItem>, ParsePath), IntegrationError> {
         let cmd = vec![
             "winget".to_string(),
             "list".to_string(),
@@ -28,13 +35,13 @@ impl WingetClient {
         guard.validate_command(&cmd).map_err(IntegrationError::Security)?;
 
         if !cfg!(target_os = "windows") {
-            return Ok(Vec::new());
+            return Ok((Vec::new(), ParsePath::UnsupportedPlatform));
         }
 
         match run_winget_json("list") {
-            Ok(payload) => Ok(parse_software_items(&payload)),
+            Ok(payload) => Ok((parse_software_items(&payload), ParsePath::Json)),
             Err(json_err) => match run_winget_text("list") {
-                Ok(text) => Ok(parse_tabular_software_items(&text)),
+                Ok(text) => Ok((parse_tabular_software_items(&text), ParsePath::TextFallback)),
                 Err(text_err) => Err(IntegrationError::CommandFailed(format!(
                     "winget list json path failed ({json_err}); text fallback failed ({text_err})"
                 ))),
@@ -45,7 +52,7 @@ impl WingetClient {
     pub fn list_upgrades(
         &self,
         guard: &SecurityGuard,
-    ) -> Result<Vec<UpdateItem>, IntegrationError> {
+    ) -> Result<(Vec<UpdateItem>, ParsePath), IntegrationError> {
         let cmd = vec![
             "winget".to_string(),
             "upgrade".to_string(),
@@ -55,13 +62,13 @@ impl WingetClient {
         guard.validate_command(&cmd).map_err(IntegrationError::Security)?;
 
         if !cfg!(target_os = "windows") {
-            return Ok(Vec::new());
+            return Ok((Vec::new(), ParsePath::UnsupportedPlatform));
         }
 
         match run_winget_json("upgrade") {
-            Ok(payload) => Ok(parse_upgrade_items(&payload)),
+            Ok(payload) => Ok((parse_upgrade_items(&payload), ParsePath::Json)),
             Err(json_err) => match run_winget_text("upgrade") {
-                Ok(text) => Ok(parse_tabular_upgrade_items(&text)),
+                Ok(text) => Ok((parse_tabular_upgrade_items(&text), ParsePath::TextFallback)),
                 Err(text_err) => Err(IntegrationError::CommandFailed(format!(
                     "winget upgrade json path failed ({json_err}); text fallback failed ({text_err})"
                 ))),

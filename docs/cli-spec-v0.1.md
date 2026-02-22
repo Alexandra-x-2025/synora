@@ -24,6 +24,7 @@ Purpose:
 
 Options:
 - `--json`: output structured JSON
+- `--verbose`: include parser path details in text mode
 
 Exit codes:
 - `0`: success
@@ -39,6 +40,7 @@ Purpose:
 
 Options:
 - `--json`: output structured JSON
+- `--verbose`: include parser path details in text mode
 
 JSON contract (minimum keys per item):
 - `name`
@@ -46,6 +48,9 @@ JSON contract (minimum keys per item):
 - `installed_version`
 - `available_version`
 - `source`
+
+Text mode summary:
+- Must print `has_updates: true|false` after table output
 
 Exit codes:
 - `0`: success

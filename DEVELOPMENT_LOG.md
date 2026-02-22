@@ -452,6 +452,32 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-21 – CLI Observability and Smoke Baseline
+
+### English
+
+- Added `--verbose` support for:
+- `software list`
+- `update check`
+- Verbose text mode now prints parser path (`json/text_fallback/unsupported_platform`)
+- `update check` text mode now prints summary flag: `has_updates: true|false`
+- Added smoke regression checklist:
+- `docs/testing/Synora_CLI_Smoke_Checklist.md`
+- Added CLI tests for verbose command paths
+
+### 中文
+
+- 为以下命令增加 `--verbose` 支持：
+- `software list`
+- `update check`
+- verbose 文本模式新增解析路径输出（`json/text_fallback/unsupported_platform`）
+- `update check` 文本模式新增汇总标识：`has_updates: true|false`
+- 新增 smoke 回归清单：
+- `docs/testing/Synora_CLI_Smoke_Checklist.md`
+- 增加 CLI verbose 命令路径测试
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

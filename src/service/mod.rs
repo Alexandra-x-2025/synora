@@ -1,5 +1,5 @@
 use crate::domain::{SoftwareItem, UpdateItem, UpdatePlan};
-use crate::integration::{IntegrationError, WingetClient};
+use crate::integration::{IntegrationError, ParsePath, WingetClient};
 use crate::security::SecurityGuard;
 
 #[derive(Default, Clone, Copy)]
@@ -9,11 +9,11 @@ pub struct SoftwareService {
 }
 
 impl SoftwareService {
-    pub fn list_software(&self) -> Result<Vec<SoftwareItem>, IntegrationError> {
+    pub fn list_software(&self) -> Result<(Vec<SoftwareItem>, ParsePath), IntegrationError> {
         self.winget.list_installed(&self.guard)
     }
 
-    pub fn check_updates(&self) -> Result<Vec<UpdateItem>, IntegrationError> {
+    pub fn check_updates(&self) -> Result<(Vec<UpdateItem>, ParsePath), IntegrationError> {
         self.winget.list_upgrades(&self.guard)
     }
 }

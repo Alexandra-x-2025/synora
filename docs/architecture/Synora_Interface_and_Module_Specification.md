@@ -11,7 +11,7 @@ Status: Frozen for v0.1
 
 Executable: `synora`
 
-### 1.1 `synora software list [--json]`
+### 1.1 `synora software list [--json] [--verbose]`
 
 Purpose:
 - Enumerate installed software.
@@ -19,8 +19,9 @@ Purpose:
 Output:
 - Default: human-readable table
 - `--json`: machine-readable JSON array
+- `--verbose`: append parser path in text mode
 
-### 1.2 `synora update check [--json]`
+### 1.2 `synora update check [--json] [--verbose]`
 
 Purpose:
 - Detect available updates.
@@ -28,6 +29,7 @@ Purpose:
 Output:
 - Default: human-readable table
 - `--json`: machine-readable JSON array
+- `--verbose`: append parser path in text mode
 
 JSON minimum fields:
 - `name`
@@ -35,6 +37,9 @@ JSON minimum fields:
 - `installed_version`
 - `available_version`
 - `source`
+
+Text summary contract:
+- print `has_updates: true|false` after table output
 
 ### 1.3 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`
 

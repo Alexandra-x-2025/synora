@@ -1,4 +1,4 @@
-use crate::integration::IntegrationError;
+use crate::integration::{IntegrationError, ParsePath};
 use crate::repository::ConfigRepository;
 use crate::security::SecurityError;
 use crate::service::{SoftwareService, UpdateService};
@@ -48,13 +48,17 @@ fn handle_software(args: &[String]) -> Result<i32, String> {
     }
 
     let as_json = args.iter().any(|v| v == "--json");
+    let verbose = args.iter().any(|v| v == "--verbose");
     let service = SoftwareService::default();
     match service.list_software() {
-        Ok(items) => {
+        Ok((items, parse_path)) => {
             if as_json {
                 print_software_json(&items);
             } else {
                 print_software_table(&items);
+                if verbose {
+                    println!("parse_path: {}", format_parse_path(parse_path));
+                }
             }
             Ok(EXIT_OK)
         }
@@ -71,13 +75,18 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
     match args[0].as_str() {
         "check" => {
             let as_json = args.iter().any(|v| v == "--json");
+            let verbose = args.iter().any(|v| v == "--verbose");
             let service = SoftwareService::default();
             match service.check_updates() {
-                Ok(items) => {
+                Ok((items, parse_path)) => {
                     if as_json {
                         print_update_json(&items);
                     } else {
                         print_update_table(&items);
+                        println!("has_updates: {}", !items.is_empty());
+                        if verbose {
+                            println!("parse_path: {}", format_parse_path(parse_path));
+                        }
                     }
                     Ok(EXIT_OK)
                 }
@@ -211,6 +220,14 @@ fn format_security_error(err: SecurityError) -> String {
     }
 }
 
+fn format_parse_path(path: ParsePath) -> &'static str {
+    match path {
+        ParsePath::Json => "json",
+        ParsePath::TextFallback => "text_fallback",
+        ParsePath::UnsupportedPlatform => "unsupported_platform",
+    }
+}
+
 fn print_software_json(items: &[crate::domain::SoftwareItem]) {
     println!("[");
     for (idx, item) in items.iter().enumerate() {
@@ -283,11 +300,11 @@ fn print_help() {
 }
 
 fn print_software_help() {
-    println!("Usage: synora software list [--json]");
+    println!("Usage: synora software list [--json] [--verbose]");
 }
 
 fn print_update_help() {
-    println!("Usage: synora update check [--json]");
+    println!("Usage: synora update check [--json] [--verbose]");
     println!("   or: synora update apply --id <package_id> [--dry-run|--confirm|--yes] [--json]");
 }
 
@@ -325,6 +342,20 @@ mod tests {
     #[test]
     fn update_apply_yes_alias_returns_ok() {
         let code = dispatch(&args(&["update", "apply", "--id", "Git.Git", "--yes", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn software_list_verbose_returns_ok() {
+        let code = dispatch(&args(&["software", "list", "--verbose"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn update_check_verbose_returns_ok() {
+        let code = dispatch(&args(&["update", "check", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
