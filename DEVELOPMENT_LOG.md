@@ -1276,3 +1276,19 @@ Examples:
 - 启用门禁时新增强制 `--confirm`
 - `--keep-record` 仅允许与 `--disable` 配合
 - 在 `PROJECT_STATE.md` 同步门禁控制面可见性状态
+
+---
+
+## 2026-02-22 – Gate Dry-Run Preview and Gate-Show Verbose Diagnostics
+
+### English
+
+- Added `--dry-run` to `config gate-set` for non-persistent preview.
+- Added `--verbose` to `config gate-show` for config path/existence diagnostics.
+- Added README quick guide for gate operations.
+
+### 中文
+
+- 为 `config gate-set` 增加 `--dry-run` 预览能力（不落盘）。
+- 为 `config gate-show` 增加 `--verbose` 诊断输出（配置路径/存在性）。
+- 在 `README.md` 增加 gate 操作快速指引。

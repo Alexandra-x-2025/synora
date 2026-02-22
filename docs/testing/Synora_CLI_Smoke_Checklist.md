@@ -21,12 +21,14 @@ Quick regression checks for CLI contract and integration behavior.
 11. `cargo run -- config history-list --json`
 12. `cargo run -- config audit-summary --json`
 13. `cargo run -- config gate-show --json`
-14. `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
-15. `cargo run -- config gate-show --json`
-16. `cargo run -- source suggest --json`
-17. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
-18. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
-19. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
+14. `cargo run -- config gate-show --verbose`
+15. `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --dry-run --json`
+16. `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
+17. `cargo run -- config gate-show --json`
+18. `cargo run -- source suggest --json`
+19. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
+20. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
+21. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
 
 ## Expected Outcomes
 
@@ -43,9 +45,11 @@ Quick regression checks for CLI contract and integration behavior.
 11. Returns JSON array of persisted update history records (can be empty).
 12. Returns JSON object with audit aggregates (`total`, `planned_confirmed`, `planned_dry_run`, `latest_timestamp`).
 13. Returns JSON gate snapshot with `real_mutation_enabled` and `gate_version`.
-14. Returns JSON with `real_mutation_enabled: true` and `approval_record_present: true`.
-15. Returns updated gate JSON snapshot.
-16. Returns JSON array of source recommendations (can be empty).
-17. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
-18. Returns JSON object for confirm path after gate enablement.
-19. Returns failure JSON payload with integration exit `4` when simulated failure is requested.
+14. Prints gate text summary plus verbose diagnostics (`config_path`, `config_exists`).
+15. Returns dry-run JSON preview with `dry_run: true` and no persisted gate change.
+16. Returns JSON with `real_mutation_enabled: true` and `approval_record_present: true`.
+17. Returns updated gate JSON snapshot.
+18. Returns JSON array of source recommendations (can be empty).
+19. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
+20. Returns JSON object for confirm path after gate enablement.
+21. Returns failure JSON payload with integration exit `4` when simulated failure is requested.

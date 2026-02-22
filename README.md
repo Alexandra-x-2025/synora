@@ -119,9 +119,27 @@ CLI spec: `docs/cli-spec-v0.1.md`
 `synora software list [--json]`  
 `synora update check [--json]`  
 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`  
-`synora config init`
+`synora config init`  
+`synora config gate-show [--json] [--verbose]`  
+`synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]`
 
 Compatibility: `--yes` is still accepted as an alias of `--confirm`.
+
+---
+
+## 🔐 Gate Operation Quick Guide
+
+Preview current gate:
+- `cargo run -- config gate-show --json`
+
+Preview enablement without writing:
+- `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --dry-run --json`
+
+Enable gate (requires explicit confirm):
+- `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
+
+Disable gate and keep approval reference:
+- `cargo run -- config gate-set --disable --keep-record --json`
 
 ---
 

@@ -96,12 +96,12 @@ Purpose:
 Purpose:
 - Read-only aggregate metrics from `update_history` for operational diagnostics.
 
-### 1.8 `synora config gate-show [--json]` (Phase 3 utility)
+### 1.8 `synora config gate-show [--json] [--verbose]` (Phase 3 utility)
 
 Purpose:
 - Read-only visibility of real mutation gate config (`execution.*`).
 
-### 1.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--json]` (Phase 3 utility)
+### 1.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]` (Phase 3 utility)
 
 Purpose:
 - Write execution gate config (`execution.*`) in a controlled CLI path.

@@ -463,26 +463,41 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
             }
         }
         "gate-show" => {
-            let as_json = args.iter().any(|v| v == "--json");
-            if args.len() > 2 || (args.len() == 2 && !as_json) {
-                print_config_help();
-                return Ok(EXIT_USAGE);
+            let mut as_json = false;
+            let mut verbose = false;
+            for opt in args.iter().skip(1) {
+                match opt.as_str() {
+                    "--json" => as_json = true,
+                    "--verbose" => verbose = true,
+                    _ => {
+                        print_config_help();
+                        return Ok(EXIT_USAGE);
+                    }
+                }
             }
 
             let repo = ConfigRepository::default();
             match repo.load_execution_gate() {
                 Ok(gate) => {
+                    let config_path = repo
+                        .resolved_config_path()
+                        .ok()
+                        .map(|p| p.display().to_string())
+                        .unwrap_or_else(|| "<unknown>".to_string());
+                    let config_exists = std::path::Path::new(&config_path).exists();
                     if as_json {
                         print_config_gate_json(
                             gate.real_mutation_enabled,
                             &gate.gate_version,
                             &gate.approval_record_ref,
+                            Some((&config_path, config_exists, verbose)),
                         );
                     } else {
                         print_config_gate_table(
                             gate.real_mutation_enabled,
                             &gate.gate_version,
                             &gate.approval_record_ref,
+                            Some((&config_path, config_exists, verbose)),
                         );
                     }
                     Ok(EXIT_OK)
@@ -499,6 +514,7 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
             let mut approval_record_ref = String::new();
             let mut confirm = false;
             let mut keep_record = false;
+            let mut dry_run = false;
             let mut as_json = false;
 
             let mut idx = 1usize;
@@ -544,6 +560,10 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                         keep_record = true;
                         idx += 1;
                     }
+                    "--dry-run" => {
+                        dry_run = true;
+                        idx += 1;
+                    }
                     "--json" => {
                         as_json = true;
                         idx += 1;
@@ -559,7 +579,7 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 eprintln!("Validation error: one of --enable/--disable is required");
                 return Ok(EXIT_USAGE);
             };
-            if enabled && !confirm {
+            if enabled && !confirm && !dry_run {
                 eprintln!("Validation error: --confirm is required when --enable is used");
                 return Ok(EXIT_USAGE);
             }
@@ -593,22 +613,32 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 String::new()
             };
 
-            let write_path = match repo.set_execution_gate(
-                enabled,
-                &final_gate_version,
-                &final_approval_record,
-            ) {
+            let write_path = match repo.resolved_config_path() {
                 Ok(path) => path,
                 Err(err) => {
                     eprintln!("Integration failure: {err}");
                     return Ok(EXIT_INTEGRATION);
                 }
             };
-            let gate = match repo.load_execution_gate() {
-                Ok(gate) => gate,
-                Err(err) => {
+            let gate = if dry_run {
+                crate::repository::ExecutionGateConfig {
+                    real_mutation_enabled: enabled,
+                    gate_version: final_gate_version.clone(),
+                    approval_record_ref: final_approval_record.clone(),
+                }
+            } else {
+                if let Err(err) =
+                    repo.set_execution_gate(enabled, &final_gate_version, &final_approval_record)
+                {
                     eprintln!("Integration failure: {err}");
                     return Ok(EXIT_INTEGRATION);
+                }
+                match repo.load_execution_gate() {
+                    Ok(gate) => gate,
+                    Err(err) => {
+                        eprintln!("Integration failure: {err}");
+                        return Ok(EXIT_INTEGRATION);
+                    }
                 }
             };
 
@@ -618,13 +648,16 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                     &gate.gate_version,
                     &gate.approval_record_ref,
                     &write_path.display().to_string(),
+                    dry_run,
                 );
             } else {
                 print_config_gate_table(
                     gate.real_mutation_enabled,
                     &gate.gate_version,
                     &gate.approval_record_ref,
+                    None,
                 );
+                println!("dry_run: {}", dry_run);
                 println!("config_path: {}", write_path.display());
             }
             Ok(EXIT_OK)
@@ -815,9 +848,9 @@ fn print_config_help() {
     println!("   or: synora config db-list [--json]");
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
-    println!("   or: synora config gate-show [--json]");
+    println!("   or: synora config gate-show [--json] [--verbose]");
     println!(
-        "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--json]"
+        "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]"
     );
 }
 
@@ -924,8 +957,27 @@ fn print_db_update_audit_summary_table(summary: &crate::repository::UpdateAuditS
     println!("latest_timestamp: {latest}");
 }
 
-fn print_config_gate_json(real_mutation_enabled: bool, gate_version: &str, approval_record_ref: &str) {
+fn print_config_gate_json(
+    real_mutation_enabled: bool,
+    gate_version: &str,
+    approval_record_ref: &str,
+    extra: Option<(&str, bool, bool)>,
+) {
     let approval_record_present = !approval_record_ref.trim().is_empty();
+    if let Some((config_path, config_exists, verbose)) = extra {
+        if verbose {
+            println!(
+                "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{},\"config_path\":\"{}\",\"config_exists\":{}}}",
+                real_mutation_enabled,
+                escape_json(gate_version),
+                escape_json(approval_record_ref),
+                approval_record_present,
+                escape_json(config_path),
+                config_exists
+            );
+            return;
+        }
+    }
     println!(
         "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{}}}",
         real_mutation_enabled,
@@ -935,7 +987,12 @@ fn print_config_gate_json(real_mutation_enabled: bool, gate_version: &str, appro
     );
 }
 
-fn print_config_gate_table(real_mutation_enabled: bool, gate_version: &str, approval_record_ref: &str) {
+fn print_config_gate_table(
+    real_mutation_enabled: bool,
+    gate_version: &str,
+    approval_record_ref: &str,
+    extra: Option<(&str, bool, bool)>,
+) {
     println!("real_mutation_enabled: {}", real_mutation_enabled);
     println!("gate_version: {}", gate_version);
     if approval_record_ref.trim().is_empty() {
@@ -945,6 +1002,12 @@ fn print_config_gate_table(real_mutation_enabled: bool, gate_version: &str, appr
         println!("approval_record_ref: {}", approval_record_ref);
         println!("approval_record_present: true");
     }
+    if let Some((config_path, config_exists, verbose)) = extra {
+        if verbose {
+            println!("config_path: {}", config_path);
+            println!("config_exists: {}", config_exists);
+        }
+    }
 }
 
 fn print_config_gate_set_json(
@@ -952,15 +1015,17 @@ fn print_config_gate_set_json(
     gate_version: &str,
     approval_record_ref: &str,
     config_path: &str,
+    dry_run: bool,
 ) {
     let approval_record_present = !approval_record_ref.trim().is_empty();
     println!(
-        "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{},\"config_path\":\"{}\"}}",
+        "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{},\"config_path\":\"{}\",\"dry_run\":{}}}",
         real_mutation_enabled,
         escape_json(gate_version),
         escape_json(approval_record_ref),
         approval_record_present,
-        escape_json(config_path)
+        escape_json(config_path),
+        dry_run
     );
 }
 
@@ -1111,6 +1176,13 @@ mod tests {
     }
 
     #[test]
+    fn config_gate_show_verbose_returns_ok() {
+        let code = dispatch(&args(&["config", "gate-show", "--verbose"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
     fn config_gate_set_rejects_unknown_flag() {
         let code = dispatch(&args(&["config", "gate-set", "--bad-flag"]))
             .expect("dispatch should return exit code");
@@ -1159,6 +1231,21 @@ mod tests {
         ]))
         .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_set_enable_dry_run_without_confirm_returns_ok() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-set",
+            "--enable",
+            "--approval-record",
+            "docs/security/record.md",
+            "--dry-run",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
     }
 
     #[test]

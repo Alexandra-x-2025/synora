@@ -132,7 +132,7 @@ Fields:
 - `planned_dry_run`
 - `latest_timestamp` (nullable)
 
-### 2.8 `synora config gate-show [--json]` (Phase 3 Gate Visibility Utility)
+### 2.8 `synora config gate-show [--json] [--verbose]` (Phase 3 Gate Visibility Utility)
 
 Purpose:
 - Show current real-mutation gate config snapshot.
@@ -142,12 +142,15 @@ Fields:
 - `gate_version`
 - `approval_record_ref`
 - `approval_record_present`
+- verbose additions:
+- `config_path`
+- `config_exists`
 
 Notes:
 - Read-only utility for gate diagnostics.
 - Does not modify system state.
 
-### 2.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--json]` (Phase 3 Gate Control Utility)
+### 2.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]` (Phase 3 Gate Control Utility)
 
 Purpose:
 - Update runtime execution gate config without manual file editing.
@@ -155,9 +158,10 @@ Purpose:
 Rules:
 - Exactly one of `--enable` or `--disable` is required.
 - `--approval-record` is required when `--enable` is used.
-- `--confirm` is required when `--enable` is used.
+- `--confirm` is required when `--enable` is used, except with `--dry-run` preview.
 - `--keep-record` is allowed only with `--disable` and keeps previous approval reference.
 - `--gate-version` defaults to `phase3-draft-v1`.
+- `--dry-run` previews final gate state without writing config.
 
 ### 2.10 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 

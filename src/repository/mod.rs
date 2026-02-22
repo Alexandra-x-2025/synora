@@ -226,6 +226,11 @@ impl ConfigRepository {
         fs::write(&config_path, payload)?;
         Ok(config_path)
     }
+
+    pub fn resolved_config_path(&self) -> io::Result<PathBuf> {
+        let root = self.resolve_base_dir()?;
+        Ok(root.join("config.json"))
+    }
 }
 
 #[derive(Default, Clone)]
