@@ -85,7 +85,12 @@ Path rules:
 Purpose:
 - Read-only listing of persisted software entries from SQLite repository.
 
-### 1.6 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
+### 1.6 `synora config history-list [--json]` (Phase 2 utility)
+
+Purpose:
+- Read-only listing of persisted `update_history` audit events from SQLite repository.
+
+### 1.7 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
 
 Purpose:
 - Produce source recommendation candidates with score and reasons.

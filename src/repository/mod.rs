@@ -75,6 +75,16 @@ pub struct SoftwareRow {
     pub risk_level: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct UpdateHistoryRow {
+    pub id: i64,
+    pub software_id: i64,
+    pub old_version: String,
+    pub new_version: String,
+    pub timestamp: i64,
+    pub status: String,
+}
+
 impl DatabaseRepository {
     pub fn resolved_db_path(&self) -> Result<PathBuf, RepositoryError> {
         if let Some(path) = &self.db_path {
@@ -213,6 +223,33 @@ impl DatabaseRepository {
         Ok(())
     }
 
+    pub fn list_update_history(&self) -> Result<Vec<UpdateHistoryRow>, RepositoryError> {
+        let db_path = self.init_schema()?;
+        let conn = Connection::open(db_path)?;
+        let mut stmt = conn.prepare(
+            "SELECT id, software_id, old_version, new_version, timestamp, status
+             FROM update_history
+             ORDER BY timestamp DESC, id DESC",
+        )?;
+
+        let rows = stmt.query_map([], |row| {
+            Ok(UpdateHistoryRow {
+                id: row.get(0)?,
+                software_id: row.get(1)?,
+                old_version: row.get(2)?,
+                new_version: row.get(3)?,
+                timestamp: row.get(4)?,
+                status: row.get(5)?,
+            })
+        })?;
+
+        let mut items = Vec::new();
+        for row in rows {
+            items.push(row?);
+        }
+        Ok(items)
+    }
+
     pub fn add_quarantine_entry(
         &self,
         software_id: i64,
@@ -333,6 +370,14 @@ mod tests {
         assert_eq!(software.len(), 1);
         assert_eq!(software[0].name, "Git");
         assert_eq!(software[0].version, "2.44.0");
+
+        let history = repo
+            .list_update_history()
+            .expect("list update history should succeed");
+        assert_eq!(history.len(), 1);
+        assert_eq!(history[0].status, "success");
+        assert_eq!(history[0].old_version, "2.44.0");
+        assert_eq!(history[0].new_version, "2.45.0");
 
         let _ = fs::remove_dir_all(root);
     }

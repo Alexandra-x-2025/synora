@@ -18,7 +18,8 @@ Quick regression checks for CLI contract and integration behavior.
 8. `cargo run -- update apply --id Git.Git --dry-run --confirm`
 9. `cargo run -- config init`
 10. `cargo run -- config db-list --json`
-11. `cargo run -- source suggest --json`
+11. `cargo run -- config history-list --json`
+12. `cargo run -- source suggest --json`
 
 ## Expected Outcomes
 
@@ -32,4 +33,5 @@ Quick regression checks for CLI contract and integration behavior.
 8. Fails with usage validation and exit code `2`.
 9. Prints config path under `.synora` (or under `SYNORA_HOME` if set).
 10. Returns JSON array of persisted software records (can be empty).
-11. Returns JSON array of source recommendations (can be empty).
+11. Returns JSON array of persisted update history records (can be empty).
+12. Returns JSON array of source recommendations (can be empty).

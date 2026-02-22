@@ -109,7 +109,16 @@ Notes:
 - Read-only helper for repository visibility validation.
 - Does not modify system state.
 
-### 2.6 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
+### 2.6 `synora config history-list [--json]` (Phase 2 Audit Utility)
+
+Purpose:
+- Read-only listing of persisted `update_history` audit records.
+
+Notes:
+- Validates `update apply` persistence behavior for planned operations.
+- Does not modify system state.
+
+### 2.7 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.

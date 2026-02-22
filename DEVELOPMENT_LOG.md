@@ -253,6 +253,7 @@ Ready to enter CLI development phase.
 - Synced `docs/cli-spec-v0.1.md` to reflect the new signal model
 - Added `source suggest --verbose` text diagnostics for recommendation signal visibility
 - Connected `update apply` plan flow to SQLite `update_history` audit persistence (`planned_dry_run` / `planned_confirmed`)
+- Added read-only CLI visibility command: `config history-list [--json]` for update audit inspection
 
 ### 中文
 
