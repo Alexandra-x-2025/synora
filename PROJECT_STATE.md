@@ -35,7 +35,7 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - Phase 2 weekly plan (Week 1-4): Completed
 - Phase 3 quarantine simulation gate: Ready for Security Sign-off
 - Real mutation runtime gate wiring: Completed (default-off)
-- Runtime gate control plane: Available (`config gate-show` / `config gate-set`)
+- Runtime gate control plane: Available (`config gate-show` / `config gate-set` / `config gate-history`)
 - Runtime capability boundary note:
 - `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
 
@@ -56,7 +56,7 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - Phase 2 周计划（Week 1-4）：已完成
 - Phase 3 quarantine 模拟门禁：已进入 Security 签署准备
 - 真实变更运行时门禁接线：已完成（默认关闭）
-- 运行时门禁控制面：已可用（`config gate-show` / `config gate-set`）
+- 运行时门禁控制面：已可用（`config gate-show` / `config gate-set` / `config gate-history`）
 - 运行能力边界说明：
 - `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
 

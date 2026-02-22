@@ -150,7 +150,12 @@ Notes:
 - Read-only utility for gate diagnostics.
 - Does not modify system state.
 
-### 2.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]` (Phase 3 Gate Control Utility)
+### 2.9 `synora config gate-history [--json]` (Phase 3 Gate Audit Utility)
+
+Purpose:
+- Read-only listing of gate change audit records.
+
+### 2.10 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]` (Phase 3 Gate Control Utility)
 
 Purpose:
 - Update runtime execution gate config without manual file editing.
@@ -159,11 +164,12 @@ Rules:
 - Exactly one of `--enable` or `--disable` is required.
 - `--approval-record` is required when `--enable` is used.
 - `--confirm` is required when `--enable` is used, except with `--dry-run` preview.
+- `--reason` is required for persistent writes (not required in `--dry-run` preview).
 - `--keep-record` is allowed only with `--disable` and keeps previous approval reference.
 - `--gate-version` defaults to `phase3-draft-v1`.
 - `--dry-run` previews final gate state without writing config.
 
-### 2.10 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
+### 2.11 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.

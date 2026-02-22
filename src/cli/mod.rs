@@ -5,6 +5,7 @@ use crate::security::{SecurityError, SecurityGuard};
 use crate::service::{
     CleanupError, CleanupService, SoftwareService, SourceSuggestionService, UpdateService,
 };
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const EXIT_OK: i32 = 0;
 pub const EXIT_USAGE: i32 = 2;
@@ -508,10 +509,34 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 }
             }
         }
+        "gate-history" => {
+            let as_json = args.iter().any(|v| v == "--json");
+            if args.len() > 2 || (args.len() == 2 && !as_json) {
+                print_config_help();
+                return Ok(EXIT_USAGE);
+            }
+
+            let repo = DatabaseRepository::default();
+            match repo.list_gate_history() {
+                Ok(rows) => {
+                    if as_json {
+                        print_gate_history_json(&rows);
+                    } else {
+                        print_gate_history_table(&rows);
+                    }
+                    Ok(EXIT_OK)
+                }
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    Ok(EXIT_INTEGRATION)
+                }
+            }
+        }
         "gate-set" => {
             let mut enable_flag: Option<bool> = None;
             let mut gate_version: Option<String> = None;
             let mut approval_record_ref = String::new();
+            let mut reason = String::new();
             let mut confirm = false;
             let mut keep_record = false;
             let mut dry_run = false;
@@ -550,6 +575,14 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                             return Ok(EXIT_USAGE);
                         }
                         approval_record_ref = args[idx + 1].clone();
+                        idx += 2;
+                    }
+                    "--reason" => {
+                        if idx + 1 >= args.len() {
+                            eprintln!("Validation error: --reason requires a value");
+                            return Ok(EXIT_USAGE);
+                        }
+                        reason = args[idx + 1].clone();
                         idx += 2;
                     }
                     "--confirm" => {
@@ -591,6 +624,10 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 eprintln!("Validation error: --approval-record is required when --enable is used");
                 return Ok(EXIT_USAGE);
             }
+            if !dry_run && reason.trim().is_empty() {
+                eprintln!("Validation error: --reason is required unless --dry-run is used");
+                return Ok(EXIT_USAGE);
+            }
 
             let repo = ConfigRepository::default();
             let current = match repo.load_execution_gate() {
@@ -630,6 +667,21 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 if let Err(err) =
                     repo.set_execution_gate(enabled, &final_gate_version, &final_approval_record)
                 {
+                    eprintln!("Integration failure: {err}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+                let timestamp = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .map(|v| v.as_secs() as i64)
+                    .unwrap_or(0);
+                let db_repo = DatabaseRepository::default();
+                if let Err(err) = db_repo.log_gate_change(
+                    timestamp,
+                    enabled,
+                    &final_gate_version,
+                    &final_approval_record,
+                    &reason,
+                ) {
                     eprintln!("Integration failure: {err}");
                     return Ok(EXIT_INTEGRATION);
                 }
@@ -849,8 +901,9 @@ fn print_config_help() {
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
     println!("   or: synora config gate-show [--json] [--verbose]");
+    println!("   or: synora config gate-history [--json]");
     println!(
-        "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]"
+        "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]"
     );
 }
 
@@ -1029,6 +1082,45 @@ fn print_config_gate_set_json(
     );
 }
 
+fn print_gate_history_json(rows: &[crate::repository::GateHistoryRow]) {
+    println!("[");
+    for (idx, row) in rows.iter().enumerate() {
+        let comma = if idx + 1 == rows.len() { "" } else { "," };
+        println!(
+            "  {{\"id\":{},\"timestamp\":{},\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{},\"reason\":\"{}\"}}{}",
+            row.id,
+            row.timestamp,
+            row.real_mutation_enabled,
+            escape_json(&row.gate_version),
+            escape_json(&row.approval_record_ref),
+            !row.approval_record_ref.trim().is_empty(),
+            escape_json(&row.reason),
+            comma
+        );
+    }
+    println!("]");
+}
+
+fn print_gate_history_table(rows: &[crate::repository::GateHistoryRow]) {
+    if rows.is_empty() {
+        println!("No gate history entries.");
+        return;
+    }
+    println!("id  timestamp  enabled  gate_version  approval_record_present  reason");
+    println!("--  ---------  -------  ------------  -----------------------  ------");
+    for row in rows {
+        println!(
+            "{}  {}  {}  {}  {}  {}",
+            row.id,
+            row.timestamp,
+            row.real_mutation_enabled,
+            row.gate_version,
+            !row.approval_record_ref.trim().is_empty(),
+            row.reason
+        );
+    }
+}
+
 fn print_source_suggestions_json(items: &[crate::domain::SourceRecommendation]) {
     println!("[");
     for (idx, item) in items.iter().enumerate() {
@@ -1183,6 +1275,20 @@ mod tests {
     }
 
     #[test]
+    fn config_gate_history_rejects_unknown_flag() {
+        let code = dispatch(&args(&["config", "gate-history", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_history_json_returns_ok() {
+        let code = dispatch(&args(&["config", "gate-history", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
     fn config_gate_set_rejects_unknown_flag() {
         let code = dispatch(&args(&["config", "gate-set", "--bad-flag"]))
             .expect("dispatch should return exit code");
@@ -1246,6 +1352,18 @@ mod tests {
         ]))
         .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_gate_set_requires_reason_when_not_dry_run() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-set",
+            "--disable",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]

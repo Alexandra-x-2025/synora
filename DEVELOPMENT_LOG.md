@@ -1292,3 +1292,19 @@ Examples:
 - 为 `config gate-set` 增加 `--dry-run` 预览能力（不落盘）。
 - 为 `config gate-show` 增加 `--verbose` 诊断输出（配置路径/存在性）。
 - 在 `README.md` 增加 gate 操作快速指引。
+
+---
+
+## 2026-02-22 – Gate Reason Audit and History Query Added
+
+### English
+
+- Added `--reason` contract for persistent `config gate-set` writes.
+- Added `config gate-history [--json]` for gate change audit visibility.
+- Persisted gate change records into SQLite `gate_history` table.
+
+### 中文
+
+- 为持久化 `config gate-set` 写入新增 `--reason` 契约。
+- 新增 `config gate-history [--json]`，用于查看门禁变更审计轨迹。
+- 门禁变更记录已持久化至 SQLite `gate_history` 表。

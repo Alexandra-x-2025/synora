@@ -266,6 +266,16 @@ pub struct UpdateAuditSummary {
     pub latest_timestamp: Option<i64>,
 }
 
+#[derive(Debug, Clone)]
+pub struct GateHistoryRow {
+    pub id: i64,
+    pub timestamp: i64,
+    pub real_mutation_enabled: bool,
+    pub gate_version: String,
+    pub approval_record_ref: String,
+    pub reason: String,
+}
+
 impl DatabaseRepository {
     pub fn resolved_db_path(&self) -> Result<PathBuf, RepositoryError> {
         if let Some(path) = &self.db_path {
@@ -322,6 +332,15 @@ impl DatabaseRepository {
                 key_path TEXT NOT NULL,
                 backup_blob TEXT NOT NULL,
                 timestamp INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS gate_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp INTEGER NOT NULL,
+                real_mutation_enabled INTEGER NOT NULL,
+                gate_version TEXT NOT NULL,
+                approval_record_ref TEXT NOT NULL,
+                reason TEXT NOT NULL
             );
             ",
         )?;
@@ -494,6 +513,57 @@ impl DatabaseRepository {
         )?;
         Ok(())
     }
+
+    pub fn log_gate_change(
+        &self,
+        timestamp: i64,
+        real_mutation_enabled: bool,
+        gate_version: &str,
+        approval_record_ref: &str,
+        reason: &str,
+    ) -> Result<(), RepositoryError> {
+        let db_path = self.init_schema()?;
+        let conn = Connection::open(db_path)?;
+        conn.execute(
+            "INSERT INTO gate_history (timestamp, real_mutation_enabled, gate_version, approval_record_ref, reason)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                timestamp,
+                if real_mutation_enabled { 1 } else { 0 },
+                gate_version,
+                approval_record_ref,
+                reason
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn list_gate_history(&self) -> Result<Vec<GateHistoryRow>, RepositoryError> {
+        let db_path = self.init_schema()?;
+        let conn = Connection::open(db_path)?;
+        let mut stmt = conn.prepare(
+            "SELECT id, timestamp, real_mutation_enabled, gate_version, approval_record_ref, reason
+             FROM gate_history
+             ORDER BY timestamp DESC, id DESC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let enabled: i64 = row.get(2)?;
+            Ok(GateHistoryRow {
+                id: row.get(0)?,
+                timestamp: row.get(1)?,
+                real_mutation_enabled: enabled != 0,
+                gate_version: row.get(3)?,
+                approval_record_ref: row.get(4)?,
+                reason: row.get(5)?,
+            })
+        })?;
+
+        let mut items = Vec::new();
+        for row in rows {
+            items.push(row?);
+        }
+        Ok(items)
+    }
 }
 
 #[cfg(test)]
@@ -612,6 +682,32 @@ mod tests {
         assert!(gate.real_mutation_enabled);
         assert_eq!(gate.gate_version, "phase3-go-live-v1");
         assert_eq!(gate.approval_record_ref, "docs/security/approved.md");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn gate_history_roundtrip() {
+        let root = unique_dir("synora-gate-history-roundtrip-test");
+        let db_path = root.join("db").join("synora.db");
+        let repo = DatabaseRepository {
+            db_path: Some(db_path),
+        };
+
+        repo.log_gate_change(
+            1_700_123_456,
+            true,
+            "phase3-go-live-v1",
+            "docs/security/approved.md",
+            "enable for pilot",
+        )
+        .expect("gate log should succeed");
+
+        let rows = repo.list_gate_history().expect("gate history should read");
+        assert_eq!(rows.len(), 1);
+        assert!(rows[0].real_mutation_enabled);
+        assert_eq!(rows[0].gate_version, "phase3-go-live-v1");
+        assert_eq!(rows[0].reason, "enable for pilot");
 
         let _ = fs::remove_dir_all(root);
     }

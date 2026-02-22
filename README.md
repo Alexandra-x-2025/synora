@@ -121,7 +121,8 @@ CLI spec: `docs/cli-spec-v0.1.md`
 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`  
 `synora config init`  
 `synora config gate-show [--json] [--verbose]`  
-`synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]`
+`synora config gate-history [--json]`  
+`synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]`
 
 Compatibility: `--yes` is still accepted as an alias of `--confirm`.
 
@@ -136,10 +137,13 @@ Preview enablement without writing:
 - `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --dry-run --json`
 
 Enable gate (requires explicit confirm):
-- `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
+- `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --reason "pilot enable" --json`
 
 Disable gate and keep approval reference:
-- `cargo run -- config gate-set --disable --keep-record --json`
+- `cargo run -- config gate-set --disable --keep-record --reason "rollback to safe default" --json`
+
+Show gate change history:
+- `cargo run -- config gate-history --json`
 
 ---
 

@@ -101,12 +101,17 @@ Purpose:
 Purpose:
 - Read-only visibility of real mutation gate config (`execution.*`).
 
-### 1.9 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--dry-run] [--json]` (Phase 3 utility)
+### 1.9 `synora config gate-history [--json]` (Phase 3 utility)
+
+Purpose:
+- Read-only visibility of gate change history records.
+
+### 1.10 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]` (Phase 3 utility)
 
 Purpose:
 - Write execution gate config (`execution.*`) in a controlled CLI path.
 
-### 1.10 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
+### 1.11 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
 
 Purpose:
 - Produce source recommendation candidates with score and reasons.
