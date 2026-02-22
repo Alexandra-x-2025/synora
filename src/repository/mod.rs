@@ -538,14 +538,27 @@ impl DatabaseRepository {
         Ok(())
     }
 
-    pub fn list_gate_history(&self) -> Result<Vec<GateHistoryRow>, RepositoryError> {
+    pub fn list_gate_history_filtered(
+        &self,
+        limit: Option<usize>,
+        enabled_only: bool,
+    ) -> Result<Vec<GateHistoryRow>, RepositoryError> {
         let db_path = self.init_schema()?;
         let conn = Connection::open(db_path)?;
-        let mut stmt = conn.prepare(
+
+        let mut sql = String::from(
             "SELECT id, timestamp, real_mutation_enabled, gate_version, approval_record_ref, reason
-             FROM gate_history
-             ORDER BY timestamp DESC, id DESC",
-        )?;
+             FROM gate_history",
+        );
+        if enabled_only {
+            sql.push_str(" WHERE real_mutation_enabled = 1");
+        }
+        sql.push_str(" ORDER BY timestamp DESC, id DESC");
+        if let Some(v) = limit {
+            sql.push_str(&format!(" LIMIT {v}"));
+        }
+
+        let mut stmt = conn.prepare(&sql)?;
         let rows = stmt.query_map([], |row| {
             let enabled: i64 = row.get(2)?;
             Ok(GateHistoryRow {
@@ -564,6 +577,7 @@ impl DatabaseRepository {
         }
         Ok(items)
     }
+
 }
 
 #[cfg(test)]
@@ -703,11 +717,27 @@ mod tests {
         )
         .expect("gate log should succeed");
 
-        let rows = repo.list_gate_history().expect("gate history should read");
-        assert_eq!(rows.len(), 1);
-        assert!(rows[0].real_mutation_enabled);
-        assert_eq!(rows[0].gate_version, "phase3-go-live-v1");
-        assert_eq!(rows[0].reason, "enable for pilot");
+        repo.log_gate_change(1_700_123_457, false, "phase3-draft-v1", "", "disable after pilot")
+            .expect("gate log should succeed");
+
+        let rows = repo
+            .list_gate_history_filtered(None, false)
+            .expect("gate history should read");
+        assert_eq!(rows.len(), 2);
+        assert!(!rows[0].real_mutation_enabled);
+        assert_eq!(rows[0].gate_version, "phase3-draft-v1");
+        assert_eq!(rows[0].reason, "disable after pilot");
+
+        let enabled_rows = repo
+            .list_gate_history_filtered(None, true)
+            .expect("enabled-only gate history should read");
+        assert_eq!(enabled_rows.len(), 1);
+        assert!(enabled_rows[0].real_mutation_enabled);
+
+        let limited_rows = repo
+            .list_gate_history_filtered(Some(1), false)
+            .expect("limited gate history should read");
+        assert_eq!(limited_rows.len(), 1);
 
         let _ = fs::remove_dir_all(root);
     }

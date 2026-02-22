@@ -510,14 +510,45 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
             }
         }
         "gate-history" => {
-            let as_json = args.iter().any(|v| v == "--json");
-            if args.len() > 2 || (args.len() == 2 && !as_json) {
-                print_config_help();
-                return Ok(EXIT_USAGE);
+            let mut as_json = false;
+            let mut enabled_only = false;
+            let mut limit: Option<usize> = None;
+
+            let mut idx = 1usize;
+            while idx < args.len() {
+                match args[idx].as_str() {
+                    "--json" => {
+                        as_json = true;
+                        idx += 1;
+                    }
+                    "--enabled-only" => {
+                        enabled_only = true;
+                        idx += 1;
+                    }
+                    "--limit" => {
+                        if idx + 1 >= args.len() {
+                            eprintln!("Validation error: --limit requires a value");
+                            return Ok(EXIT_USAGE);
+                        }
+                        let parsed = match args[idx + 1].parse::<usize>() {
+                            Ok(v) if v > 0 => v,
+                            _ => {
+                                eprintln!("Validation error: --limit must be a positive integer");
+                                return Ok(EXIT_USAGE);
+                            }
+                        };
+                        limit = Some(parsed);
+                        idx += 2;
+                    }
+                    _ => {
+                        print_config_help();
+                        return Ok(EXIT_USAGE);
+                    }
+                }
             }
 
             let repo = DatabaseRepository::default();
-            match repo.list_gate_history() {
+            match repo.list_gate_history_filtered(limit, enabled_only) {
                 Ok(rows) => {
                     if as_json {
                         print_gate_history_json(&rows);
@@ -901,7 +932,7 @@ fn print_config_help() {
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
     println!("   or: synora config gate-show [--json] [--verbose]");
-    println!("   or: synora config gate-history [--json]");
+    println!("   or: synora config gate-history [--json] [--enabled-only] [--limit <n>]");
     println!(
         "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]"
     );
@@ -1189,6 +1220,19 @@ mod tests {
         parts.iter().map(|v| (*v).to_string()).collect()
     }
 
+    fn ensure_gate_disabled_for_test() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-set",
+            "--disable",
+            "--reason",
+            "test setup: enforce disabled gate",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
     #[test]
     fn update_apply_missing_id_returns_usage() {
         let code = dispatch(&args(&["update", "apply"])).expect("dispatch should return exit code");
@@ -1282,8 +1326,36 @@ mod tests {
     }
 
     #[test]
+    fn config_gate_history_limit_missing_value_returns_usage() {
+        let code = dispatch(&args(&["config", "gate-history", "--limit"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_history_limit_invalid_returns_usage() {
+        let code = dispatch(&args(&["config", "gate-history", "--limit", "0"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
     fn config_gate_history_json_returns_ok() {
         let code = dispatch(&args(&["config", "gate-history", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_gate_history_enabled_only_returns_ok() {
+        let code = dispatch(&args(&["config", "gate-history", "--enabled-only"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_gate_history_limit_returns_ok() {
+        let code = dispatch(&args(&["config", "gate-history", "--limit", "10", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
@@ -1403,6 +1475,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_confirm_json_returns_security_when_gate_disabled() {
+        ensure_gate_disabled_for_test();
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
@@ -1444,6 +1517,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_confirm_simulated_failure_returns_security_when_gate_disabled() {
+        ensure_gate_disabled_for_test();
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
@@ -1474,6 +1548,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_high_risk_with_confirm_returns_security_when_gate_disabled() {
+        ensure_gate_disabled_for_test();
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
