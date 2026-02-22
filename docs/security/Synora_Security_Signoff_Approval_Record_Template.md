@@ -75,3 +75,8 @@ Secondary reviewer (optional):
 - [ ] Update `PROJECT_STATE.md` if phase status changes
 - [ ] Update `docs/roadmap.md` if go-live state changes
 - [ ] Create follow-up issues for residual risks
+
+---
+
+Reference sample:
+- `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`

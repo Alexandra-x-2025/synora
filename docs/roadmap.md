@@ -148,6 +148,8 @@ Kickoff update:
 - `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
 - Approval record template added:
 - `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
+- Pre-filled approval record draft added:
+- `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`
 
 ---
 
@@ -195,3 +197,5 @@ Kickoff update:
 - `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
 - 已新增审批记录模板：
 - `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
+- 已新增预填审批记录草案：
+- `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`

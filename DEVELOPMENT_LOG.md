@@ -1038,3 +1038,19 @@ Examples:
 - 新增单页审批模板：
 - `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
 - 可直接复用到 PR 描述或发布说明
+
+---
+
+## 2026-02-22 – Phase 3 Pre-Filled Approval Record Draft Added
+
+### English
+
+- Added pre-filled approval record draft:
+- `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`
+- Included current evidence summary and pending decision placeholders
+
+### 中文
+
+- 新增预填审批记录草案：
+- `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`
+- 包含当前证据摘要与待签署决策占位字段
