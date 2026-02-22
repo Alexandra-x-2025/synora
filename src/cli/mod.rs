@@ -493,6 +493,100 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 }
             }
         }
+        "gate-set" => {
+            let mut enable_flag: Option<bool> = None;
+            let mut gate_version = "phase3-draft-v1".to_string();
+            let mut approval_record_ref = String::new();
+            let mut as_json = false;
+
+            let mut idx = 1usize;
+            while idx < args.len() {
+                match args[idx].as_str() {
+                    "--enable" => {
+                        if enable_flag.is_some() {
+                            eprintln!("Validation error: --enable/--disable are mutually exclusive");
+                            return Ok(EXIT_USAGE);
+                        }
+                        enable_flag = Some(true);
+                        idx += 1;
+                    }
+                    "--disable" => {
+                        if enable_flag.is_some() {
+                            eprintln!("Validation error: --enable/--disable are mutually exclusive");
+                            return Ok(EXIT_USAGE);
+                        }
+                        enable_flag = Some(false);
+                        idx += 1;
+                    }
+                    "--gate-version" => {
+                        if idx + 1 >= args.len() {
+                            eprintln!("Validation error: --gate-version requires a value");
+                            return Ok(EXIT_USAGE);
+                        }
+                        gate_version = args[idx + 1].clone();
+                        idx += 2;
+                    }
+                    "--approval-record" => {
+                        if idx + 1 >= args.len() {
+                            eprintln!("Validation error: --approval-record requires a value");
+                            return Ok(EXIT_USAGE);
+                        }
+                        approval_record_ref = args[idx + 1].clone();
+                        idx += 2;
+                    }
+                    "--json" => {
+                        as_json = true;
+                        idx += 1;
+                    }
+                    _ => {
+                        eprintln!("Validation error: unknown option '{}'", args[idx]);
+                        return Ok(EXIT_USAGE);
+                    }
+                }
+            }
+
+            let Some(enabled) = enable_flag else {
+                eprintln!("Validation error: one of --enable/--disable is required");
+                return Ok(EXIT_USAGE);
+            };
+            if enabled && approval_record_ref.trim().is_empty() {
+                eprintln!("Validation error: --approval-record is required when --enable is used");
+                return Ok(EXIT_USAGE);
+            }
+
+            let repo = ConfigRepository::default();
+            let write_path = match repo.set_execution_gate(enabled, &gate_version, &approval_record_ref) {
+                Ok(path) => path,
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+            };
+            let gate = match repo.load_execution_gate() {
+                Ok(gate) => gate,
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+            };
+
+            if as_json {
+                print_config_gate_set_json(
+                    gate.real_mutation_enabled,
+                    &gate.gate_version,
+                    &gate.approval_record_ref,
+                    &write_path.display().to_string(),
+                );
+            } else {
+                print_config_gate_table(
+                    gate.real_mutation_enabled,
+                    &gate.gate_version,
+                    &gate.approval_record_ref,
+                );
+                println!("config_path: {}", write_path.display());
+            }
+            Ok(EXIT_OK)
+        }
         _ => {
             print_config_help();
             Ok(EXIT_USAGE)
@@ -680,6 +774,9 @@ fn print_config_help() {
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
     println!("   or: synora config gate-show [--json]");
+    println!(
+        "   or: synora config gate-set (--enable|--disable) [--approval-record <ref>] [--gate-version <version>] [--json]"
+    );
 }
 
 fn print_source_help() {
@@ -806,6 +903,23 @@ fn print_config_gate_table(real_mutation_enabled: bool, gate_version: &str, appr
         println!("approval_record_ref: {}", approval_record_ref);
         println!("approval_record_present: true");
     }
+}
+
+fn print_config_gate_set_json(
+    real_mutation_enabled: bool,
+    gate_version: &str,
+    approval_record_ref: &str,
+    config_path: &str,
+) {
+    let approval_record_present = !approval_record_ref.trim().is_empty();
+    println!(
+        "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{},\"config_path\":\"{}\"}}",
+        real_mutation_enabled,
+        escape_json(gate_version),
+        escape_json(approval_record_ref),
+        approval_record_present,
+        escape_json(config_path)
+    );
 }
 
 fn print_source_suggestions_json(items: &[crate::domain::SourceRecommendation]) {
@@ -952,6 +1066,27 @@ mod tests {
         let code = dispatch(&args(&["config", "gate-show", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_gate_set_rejects_unknown_flag() {
+        let code = dispatch(&args(&["config", "gate-set", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_set_requires_mode() {
+        let code = dispatch(&args(&["config", "gate-set", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_set_enable_requires_approval_record() {
+        let code = dispatch(&args(&["config", "gate-set", "--enable", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]

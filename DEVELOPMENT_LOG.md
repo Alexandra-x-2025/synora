@@ -1238,3 +1238,23 @@ Examples:
 - 新增 `synora config gate-show [--json]`，用于查看运行时门禁状态。
 - 修复 `config init` JSON 生成，避免 Windows 路径转义导致配置非法。
 - 增加旧配置兼容解析，避免历史 malformed 配置触发集成错误。
+
+---
+
+## 2026-02-22 – Gate Control Command Added (`config gate-set`)
+
+### English
+
+- Added `synora config gate-set` to write execution gate state via CLI.
+- Enforced command contract:
+- `--enable`/`--disable` mutually exclusive and required
+- `--approval-record` required when enabling gate
+- Added CLI and repository tests for gate-set validation and persistence.
+
+### 中文
+
+- 新增 `synora config gate-set`，可通过 CLI 写入 execution 门禁配置。
+- 强化参数契约：
+- `--enable`/`--disable` 必须二选一
+- 启用门禁时必须提供 `--approval-record`
+- 补充 CLI 与 repository 测试，覆盖参数校验与持久化行为。

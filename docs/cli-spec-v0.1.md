@@ -147,7 +147,17 @@ Notes:
 - Read-only utility for gate diagnostics.
 - Does not modify system state.
 
-### 2.9 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
+### 2.9 `synora config gate-set (--enable|--disable) [--approval-record <ref>] [--gate-version <version>] [--json]` (Phase 3 Gate Control Utility)
+
+Purpose:
+- Update runtime execution gate config without manual file editing.
+
+Rules:
+- Exactly one of `--enable` or `--disable` is required.
+- `--approval-record` is required when `--enable` is used.
+- `--gate-version` defaults to `phase3-draft-v1`.
+
+### 2.10 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.

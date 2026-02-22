@@ -175,6 +175,57 @@ impl ConfigRepository {
             approval_record_ref,
         })
     }
+
+    pub fn set_execution_gate(
+        &self,
+        real_mutation_enabled: bool,
+        gate_version: &str,
+        approval_record_ref: &str,
+    ) -> io::Result<PathBuf> {
+        let config_path = self.init_default()?;
+        let root = self.resolve_base_dir()?;
+        let raw = fs::read_to_string(&config_path).unwrap_or_else(|_| "{}".to_string());
+        let mut parsed: Value = serde_json::from_str(&raw).unwrap_or_else(|_| json!({}));
+        if !parsed.is_object() {
+            parsed = json!({});
+        }
+
+        let obj = parsed
+            .as_object_mut()
+            .expect("parsed must be object after normalization");
+        if !obj.contains_key("log_level") {
+            obj.insert("log_level".to_string(), json!("INFO"));
+        }
+        if !obj.contains_key("quarantine_dir") {
+            obj.insert(
+                "quarantine_dir".to_string(),
+                json!(root.join("quarantine").display().to_string()),
+            );
+        }
+        if !obj.contains_key("allow_apply_updates") {
+            obj.insert("allow_apply_updates".to_string(), json!(false));
+        }
+
+        let normalized_gate_version = if gate_version.trim().is_empty() {
+            "phase3-draft-v1"
+        } else {
+            gate_version.trim()
+        };
+        obj.insert(
+            "execution".to_string(),
+            json!({
+                "real_mutation_enabled": real_mutation_enabled,
+                "gate_version": normalized_gate_version,
+                "approval_record_ref": approval_record_ref
+            }),
+        );
+
+        let payload = serde_json::to_string_pretty(&parsed)
+            .map(|v| format!("{v}\n"))
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
+        fs::write(&config_path, payload)?;
+        Ok(config_path)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -534,6 +585,28 @@ mod tests {
         assert!(gate.real_mutation_enabled);
         assert_eq!(gate.gate_version, "phase3-draft-v1");
         assert_eq!(gate.approval_record_ref, "docs/security/approval.md");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn set_execution_gate_persists_values_and_roundtrips() {
+        let root = unique_dir("synora-gate-set-roundtrip-test");
+        let repo = ConfigRepository {
+            base_dir: Some(root.clone()),
+        };
+
+        let path = repo
+            .set_execution_gate(true, "phase3-go-live-v1", "docs/security/approved.md")
+            .expect("set_execution_gate should succeed");
+        assert!(path.exists());
+
+        let gate = repo
+            .load_execution_gate()
+            .expect("load_execution_gate should succeed");
+        assert!(gate.real_mutation_enabled);
+        assert_eq!(gate.gate_version, "phase3-go-live-v1");
+        assert_eq!(gate.approval_record_ref, "docs/security/approved.md");
 
         let _ = fs::remove_dir_all(root);
     }
