@@ -916,3 +916,25 @@ Examples:
 - 结论：
 - 对模拟路径与 Phase 3 持续开发给出 Go
 - 对真实文件/注册表变更路径给出 No-Go（需先完成并签署安全控制项）
+
+---
+
+## 2026-02-22 – Phase 3 Security Control Progress: Target Path Validation
+
+### English
+
+- Added cleanup target path validation in `SecurityGuard`:
+- canonical normalization
+- parent traversal rejection
+- allowlist root constraint
+- Connected cleanup execution to security validation path and mapped violations to exit code `3`
+- Added tests for traversal rejection at security and CLI levels
+
+### 中文
+
+- 在 `SecurityGuard` 中新增 cleanup 目标路径校验：
+- canonical 归一化
+- 上级目录穿越拦截
+- allowlist 根目录约束
+- 将 cleanup 执行接入安全校验路径，并将违规映射为退出码 `3`
+- 新增安全层与 CLI 层的路径穿越拒绝测试

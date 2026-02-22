@@ -134,6 +134,8 @@ Kickoff update:
 - Gate review decision recorded:
 - Go for simulation path
 - No-Go for real mutation path until security controls are signed off
+- Security control progress:
+- canonical target validation + traversal blocking + allowlist root constraint implemented for cleanup path
 
 ---
 
@@ -167,3 +169,5 @@ Kickoff update:
 - 已记录 Gate 评审结论：
 - 模拟路径 Go
 - 真实变更路径 No-Go（需安全控制签署）
+- 安全控制进展：
+- cleanup 路径已实现 canonical 目标校验、路径穿越拦截与 allowlist 根目录约束

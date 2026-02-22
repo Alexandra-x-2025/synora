@@ -3,7 +3,7 @@
 # Synora -- Cleanup Quarantine CLI 契约（草案 v0.2）
 
 Date: 2026-02-22
-Status: Draft (Phase 3, M1-M4 rollback simulation path implemented)
+Status: Draft (Phase 3, M1-M4 + path validation controls implemented)
 Compatibility: Does not modify frozen `v0.1` contract
 
 ---

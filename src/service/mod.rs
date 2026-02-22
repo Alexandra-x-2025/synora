@@ -1,7 +1,7 @@
 use crate::domain::{CleanupPlan, SoftwareItem, SourceRecommendation, UpdateItem, UpdatePlan};
 use crate::integration::{IntegrationError, ParsePath, WingetClient};
 use crate::repository::DatabaseRepository;
-use crate::security::SecurityGuard;
+use crate::security::{SecurityError, SecurityGuard};
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -123,6 +123,19 @@ impl UpdateService {
 #[derive(Default, Clone)]
 pub struct CleanupService {
     repo: DatabaseRepository,
+    guard: SecurityGuard,
+}
+
+#[derive(Debug)]
+pub enum CleanupError {
+    Security(SecurityError),
+    Repository(crate::repository::RepositoryError),
+}
+
+impl From<crate::repository::RepositoryError> for CleanupError {
+    fn from(value: crate::repository::RepositoryError) -> Self {
+        CleanupError::Repository(value)
+    }
 }
 
 impl CleanupService {
@@ -188,7 +201,16 @@ impl CleanupService {
         mut plan: CleanupPlan,
         simulate_failure: bool,
         simulate_rollback_failure: bool,
-    ) -> Result<(CleanupPlan, usize), crate::repository::RepositoryError> {
+    ) -> Result<(CleanupPlan, usize), CleanupError> {
+        let quarantine_root = crate::paths::ensure_synora_home()
+            .map_err(|err| CleanupError::Repository(crate::repository::RepositoryError::Io(err)))?
+            .join("quarantine");
+        let target = quarantine_root.join(format!("{}.pending", plan.package_id));
+        let _normalized_target = self
+            .guard
+            .validate_target_path(&target, &quarantine_root)
+            .map_err(CleanupError::Security)?;
+
         let software_id = self.repo.upsert_software(
             &plan.package_id,
             "unknown",
@@ -462,6 +484,7 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            guard: crate::security::SecurityGuard,
         };
 
         let plan = service
@@ -495,6 +518,7 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            guard: crate::security::SecurityGuard,
         };
 
         let plan = service
@@ -547,6 +571,7 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            guard: crate::security::SecurityGuard,
         };
 
         let plan = service
@@ -581,6 +606,7 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            guard: crate::security::SecurityGuard,
         };
 
         let plan = service
@@ -605,5 +631,26 @@ mod tests {
         assert_eq!(rollback_count, 1);
 
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_execute_rejects_traversal_target() {
+        let root = unique_dir("synora-cleanup-security-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path),
+            },
+            guard: crate::security::SecurityGuard,
+        };
+
+        let plan = service
+            .plan_quarantine("../evil", true, false)
+            .expect("plan should build");
+        let err = service
+            .execute_cleanup_plan(plan, false, false)
+            .expect_err("should reject traversal");
+
+        assert!(matches!(err, super::CleanupError::Security(_)));
     }
 }

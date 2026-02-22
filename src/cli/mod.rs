@@ -2,7 +2,9 @@ use crate::integration::{IntegrationError, ParsePath};
 use crate::logging::log_event;
 use crate::repository::{ConfigRepository, DatabaseRepository};
 use crate::security::SecurityError;
-use crate::service::{CleanupService, SoftwareService, SourceSuggestionService, UpdateService};
+use crate::service::{
+    CleanupError, CleanupService, SoftwareService, SourceSuggestionService, UpdateService,
+};
 
 pub const EXIT_OK: i32 = 0;
 pub const EXIT_USAGE: i32 = 2;
@@ -290,10 +292,16 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
     let (plan, written) =
         match service.execute_cleanup_plan(plan, simulate_failure, simulate_rollback_failure) {
             Ok(result) => result,
-            Err(err) => {
-                eprintln!("Integration failure: failed to persist cleanup plan: {err}");
-                return Ok(EXIT_INTEGRATION);
-            }
+            Err(err) => match err {
+                CleanupError::Security(se) => {
+                    eprintln!("Security blocked: {}", format_security_error(se));
+                    return Ok(EXIT_SECURITY);
+                }
+                CleanupError::Repository(re) => {
+                    eprintln!("Integration failure: failed to persist cleanup plan: {re}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+            },
         };
 
     if as_json {
@@ -500,6 +508,12 @@ fn format_security_error(err: SecurityError) -> String {
         SecurityError::ProgramNotAllowlisted(p) => format!("program '{p}' is not allowlisted"),
         SecurityError::OperationNotAllowlisted(op) => {
             format!("operation '{op}' is not allowlisted for winget")
+        }
+        SecurityError::PathTraversalDetected(path) => {
+            format!("path traversal detected for '{path}'")
+        }
+        SecurityError::TargetOutsideAllowlist(path) => {
+            format!("target path '{path}' is outside allowlist root")
         }
     }
 }
@@ -929,6 +943,20 @@ mod tests {
         ]))
         .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_INTEGRATION);
+    }
+
+    #[test]
+    fn cleanup_quarantine_traversal_target_returns_security() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "../evil",
+            "--confirm",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_SECURITY);
     }
 
     #[test]

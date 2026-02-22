@@ -39,10 +39,10 @@ Scope: Must pass before enabling real quarantine mutation path
 
 ## 5. Security Controls
 
-- [ ] Canonical path validation enforced
-- [ ] Path traversal blocked
+- [x] Canonical path validation enforced
+- [x] Path traversal blocked
 - [ ] Symbolic-link escape blocked
-- [ ] Target roots constrained by allowlist
+- [x] Target roots constrained by allowlist
 - [ ] Confirmed mode required for HIGH/CRITICAL risk actions
 
 ## 6. Test Gates
