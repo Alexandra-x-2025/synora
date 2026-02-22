@@ -125,6 +125,38 @@ Compatibility: `--yes` is still accepted as an alias of `--confirm`.
 
 ---
 
+## 🦀 Rust Quick Start
+
+Prerequisites:
+- Rust toolchain installed (`cargo`)
+- Windows with `winget` available (for real integration behavior)
+
+Run:
+- `cargo check`
+- `cargo test`
+- `cargo run -- software list --json`
+- `cargo run -- update check --json`
+- `cargo run -- config init`
+
+Smoke checklist:
+- `docs/testing/Synora_CLI_Smoke_Checklist.md`
+- `docs/testing/Phase1_MVP_Readiness_Checklist.md`
+
+---
+
+## 🦀 Rust 快速开始
+
+前置条件：
+- 已安装 Rust 工具链（`cargo`）
+- Windows 环境可用 `winget`（用于真实集成行为）
+
+运行命令：
+- `cargo check`
+- `cargo test`
+- `cargo run -- software list --json`
+- `cargo run -- update check --json`
+- `cargo run -- config init`
+
 ## 📁 Project Structure
 
 ```

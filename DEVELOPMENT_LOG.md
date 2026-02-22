@@ -500,6 +500,24 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-21 – Phase 1 Release Readiness Docs Sync
+
+### English
+
+- Updated `README.md` with Rust quick-start commands
+- Added testing references for smoke and readiness validation
+- Expanded `CHANGELOG.md` unreleased entries with Rust CLI milestones
+- Added `docs/testing/Phase1_MVP_Readiness_Checklist.md`
+
+### 中文
+
+- 在 `README.md` 增加 Rust 快速开始命令
+- 增加 smoke 与就绪验证文档引用
+- 扩展 `CHANGELOG.md` 的未发布条目，覆盖 Rust CLI 里程碑
+- 新增 `docs/testing/Phase1_MVP_Readiness_Checklist.md`
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.
