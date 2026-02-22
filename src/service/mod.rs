@@ -172,16 +172,21 @@ impl CleanupService {
             requested_mode: requested_mode.to_string(),
             mode: mode.to_string(),
             status: status.to_string(),
+            mutation_boundary_reached: false,
             rollback_attempted: false,
             rollback_status: "not_needed".to_string(),
-            message: "phase3 m1: dry-run audit only, no real mutation".to_string(),
+            message: if confirmed {
+                "phase3 m2: confirmed precheck only, mutation not executed".to_string()
+            } else {
+                "phase3 m1: dry-run audit only, no real mutation".to_string()
+            },
         })
     }
 
     pub fn persist_cleanup_plan(
         &self,
         plan: &CleanupPlan,
-    ) -> Result<(), crate::repository::RepositoryError> {
+    ) -> Result<usize, crate::repository::RepositoryError> {
         let software_id = self.repo.upsert_software(
             &plan.package_id,
             "unknown",
@@ -195,7 +200,27 @@ impl CleanupService {
             .unwrap_or(0);
         self.repo
             .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
-        Ok(())
+        let mut written = 1usize;
+
+        if plan.requested_mode == "confirm" {
+            // M2 precheck evidence only, still no mutation.
+            self.repo.add_registry_backup(
+                "HKLM",
+                &format!("Software\\Synora\\Cleanup\\{}", plan.package_id),
+                "{\"mode\":\"cleanup_confirm_precheck\"}",
+                timestamp,
+            )?;
+            self.repo.add_quarantine_entry(
+                software_id,
+                &format!("precheck://{}", plan.package_id),
+                "N/A",
+                timestamp,
+                "cleanup_confirm_precheck_placeholder",
+            )?;
+            written += 2;
+        }
+
+        Ok(written)
     }
 }
 
@@ -402,9 +427,10 @@ mod tests {
         let plan = service
             .plan_quarantine("Git.Git", false, true)
             .expect("plan_quarantine should succeed");
-        service
+        let written = service
             .persist_cleanup_plan(&plan)
             .expect("persist_cleanup_plan should succeed");
+        assert_eq!(written, 1);
 
         let conn = Connection::open(db_path).expect("db should open");
         let count: i64 = conn
@@ -415,6 +441,47 @@ mod tests {
             )
             .expect("count query should succeed");
         assert_eq!(count, 1);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn persist_cleanup_confirm_writes_precheck_artifacts() {
+        let root = unique_dir("synora-cleanup-confirm-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path.clone()),
+            },
+        };
+
+        let plan = service
+            .plan_quarantine("Git.Git", true, false)
+            .expect("plan_quarantine should succeed");
+        let written = service
+            .persist_cleanup_plan(&plan)
+            .expect("persist_cleanup_plan should succeed");
+        assert_eq!(written, 3);
+
+        let conn = Connection::open(db_path).expect("db should open");
+        let status_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_confirmed'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("status count query should succeed");
+        assert_eq!(status_count, 1);
+
+        let backup_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM registry_backup", [], |row| row.get(0))
+            .expect("backup count query should succeed");
+        assert_eq!(backup_count, 1);
+
+        let quarantine_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM quarantine", [], |row| row.get(0))
+            .expect("quarantine count query should succeed");
+        assert_eq!(quarantine_count, 1);
 
         let _ = fs::remove_dir_all(root);
     }

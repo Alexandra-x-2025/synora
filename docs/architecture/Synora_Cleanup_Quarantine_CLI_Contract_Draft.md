@@ -3,7 +3,7 @@
 # Synora -- Cleanup Quarantine CLI 契约（草案 v0.2）
 
 Date: 2026-02-22
-Status: Draft (Phase 3, M1 CLI skeleton implemented)
+Status: Draft (Phase 3, M1+M2 precheck path implemented)
 Compatibility: Does not modify frozen `v0.1` contract
 
 ---
@@ -50,6 +50,7 @@ JSON minimum fields:
 - `requested_mode` (`dry-run` or `confirm`)
 - `mode` (`plan-only` or `confirmed-execution`)
 - `status` (status vocabulary above)
+- `mutation_boundary_reached` (bool; M1/M2 always `false`)
 - `rollback_attempted` (bool)
 - `rollback_status` (`not_needed` / `success` / `failed`)
 - `message` (string)

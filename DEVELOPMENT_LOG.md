@@ -824,3 +824,25 @@ Examples:
 - dry-run 审计持久化（`update_history.status = quarantine_planned`）
 - 新增 service 层 cleanup 计划对象与持久化辅助逻辑
 - 增加 CLI 契约测试：缺失 id、参数冲突、dry-run JSON 成功路径
+
+---
+
+## 2026-02-22 – Phase 3 M2: Confirm Precheck Audit Path
+
+### English
+
+- Extended `cleanup quarantine --confirm` into precheck-audit path (still no real mutation)
+- Persisted `quarantine_confirmed` status into `update_history`
+- Persisted safety evidence placeholders into:
+- `registry_backup`
+- `quarantine`
+- Added test coverage for confirmed precheck persistence path
+
+### 中文
+
+- 将 `cleanup quarantine --confirm` 扩展为 precheck 审计路径（仍不做真实变更）
+- 持久化 `quarantine_confirmed` 到 `update_history`
+- 持久化安全证据占位到：
+- `registry_backup`
+- `quarantine`
+- 增加 confirmed precheck 持久化路径的测试覆盖

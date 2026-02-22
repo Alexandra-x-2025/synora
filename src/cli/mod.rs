@@ -269,19 +269,23 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
             return Ok(EXIT_USAGE);
         }
     };
-    if let Err(err) = service.persist_cleanup_plan(&plan) {
-        eprintln!("Integration failure: failed to persist cleanup plan: {err}");
-        return Ok(EXIT_INTEGRATION);
-    }
+    let written = match service.persist_cleanup_plan(&plan) {
+        Ok(count) => count,
+        Err(err) => {
+            eprintln!("Integration failure: failed to persist cleanup plan: {err}");
+            return Ok(EXIT_INTEGRATION);
+        }
+    };
 
     if as_json {
         println!(
-            "{{\n  \"operation_id\": \"{}\",\n  \"package_id\": \"{}\",\n  \"requested_mode\": \"{}\",\n  \"mode\": \"{}\",\n  \"status\": \"{}\",\n  \"rollback_attempted\": {},\n  \"rollback_status\": \"{}\",\n  \"message\": \"{}\"\n}}",
+            "{{\n  \"operation_id\": \"{}\",\n  \"package_id\": \"{}\",\n  \"requested_mode\": \"{}\",\n  \"mode\": \"{}\",\n  \"status\": \"{}\",\n  \"mutation_boundary_reached\": {},\n  \"rollback_attempted\": {},\n  \"rollback_status\": \"{}\",\n  \"message\": \"{}\"\n}}",
             escape_json(&plan.operation_id),
             escape_json(&plan.package_id),
             escape_json(&plan.requested_mode),
             escape_json(&plan.mode),
             escape_json(&plan.status),
+            plan.mutation_boundary_reached,
             plan.rollback_attempted,
             escape_json(&plan.rollback_status),
             escape_json(&plan.message),
@@ -290,11 +294,14 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
         println!("operation_id: {}", plan.operation_id);
         println!("package_id: {}", plan.package_id);
         println!("status: {}", plan.status);
+        println!(
+            "mutation_boundary_reached: {}",
+            plan.mutation_boundary_reached
+        );
         println!("rollback_status: {}", plan.rollback_status);
         println!("message: {}", plan.message);
         if verbose {
-            println!("mutation_boundary_reached: false");
-            println!("audit_rows_written: 1");
+            println!("audit_rows_written: {written}");
         }
     }
 
@@ -839,6 +846,20 @@ mod tests {
             "--id",
             "Git.Git",
             "--dry-run",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn cleanup_quarantine_confirm_json_returns_ok() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--confirm",
             "--json",
         ]))
         .expect("dispatch should return exit code");

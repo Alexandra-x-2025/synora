@@ -42,6 +42,7 @@ pub struct CleanupPlan {
     pub requested_mode: String,
     pub mode: String,
     pub status: String,
+    pub mutation_boundary_reached: bool,
     pub rollback_attempted: bool,
     pub rollback_status: String,
     pub message: String,
