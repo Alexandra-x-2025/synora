@@ -720,3 +720,21 @@ Examples:
 - 更新计划持久化到审计表
 - 只读审计可见命令（`history-list`、`audit-summary`）
 - 项目状态已推进到 Phase 3 准备阶段
+
+---
+
+## 2026-02-22 – Phase 3 Kickoff: Quarantine Execution Draft
+
+### English
+
+- Added `docs/security/Synora_Quarantine_Execution_Design.md`
+- Defined future execution contract for real quarantine operations
+- Defined mutation boundary and rollback semantics
+- Defined planned status vocabulary for audit persistence
+
+### 中文
+
+- 新增 `docs/security/Synora_Quarantine_Execution_Design.md`
+- 定义了未来 quarantine 实执行契约
+- 定义了变更边界与回滚语义
+- 定义了审计持久化所需状态词汇

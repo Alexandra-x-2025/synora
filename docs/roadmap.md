@@ -111,6 +111,13 @@ Execution summary:
 - Performance improvements
 - Community contributions
 
+Status: In progress (started on 2026-02-22)
+
+Kickoff update:
+- Added quarantine execution design draft:
+- `docs/security/Synora_Quarantine_Execution_Design.md`
+- Defined proposed command contract, rollback boundary, and audit status vocabulary
+
 ---
 
 ## 阶段 3 – 稳定与生态扩展
@@ -119,3 +126,10 @@ Execution summary:
 - 安装器覆盖增强
 - 性能优化
 - 社区协作
+
+状态：进行中（2026-02-22 启动）
+
+启动进展：
+- 已新增 quarantine 实执行设计草案：
+- `docs/security/Synora_Quarantine_Execution_Design.md`
+- 明确了建议命令契约、回滚边界与审计状态词汇

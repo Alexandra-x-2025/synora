@@ -12,11 +12,11 @@ Current date reference: 2026-02-22
 
 ## Current Phase
 
-Phase 3 – Stability & Ecosystem (Preparation)
+Phase 3 – Stability & Ecosystem (Design Kickoff)
 
 ## 当前阶段
 
-阶段 3 – 稳定与生态扩展（准备中）
+阶段 3 – 稳定与生态扩展（设计启动）
 
 ---
 
@@ -74,16 +74,16 @@ Phase 3 – Stability & Ecosystem (Preparation)
 
 ## In Progress
 
-- Phase 3 planning baseline:
-- Quarantine real action design
-- Registry backup blob format hardening
+- Phase 3 design kickoff:
+- Quarantine execution contract draft
+- Registry backup blob format hardening plan
 - Integration review for ecosystem expansion
 
 ## 进行中
 
-- Phase 3 规划基线：
-- Quarantine 实际动作设计
-- 注册表备份数据格式加固
+- Phase 3 设计启动：
+- Quarantine 执行契约草案
+- 注册表备份数据格式加固计划
 - 生态扩展前的集成评审
 
 ---
