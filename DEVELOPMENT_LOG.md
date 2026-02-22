@@ -1098,3 +1098,21 @@ Examples:
 - 运行时配置门禁
 - 命令确认/风险门禁
 - 保持真实变更默认关闭，并确保全程可审计
+
+---
+
+## 2026-02-22 – Real Mutation Gate Approval Pack Added
+
+### English
+
+- Added approval artifacts for real mutation gate decision:
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_Template.md`
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md`
+- Linked strategy draft to approval artifacts for direct PR/release use
+
+### 中文
+
+- 新增真实变更开关审批工件：
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_Template.md`
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md`
+- 已在策略草案中关联审批工件，便于直接用于 PR/发布审批

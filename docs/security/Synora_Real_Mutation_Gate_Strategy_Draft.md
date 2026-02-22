@@ -104,3 +104,11 @@ Step 5:
 - Whether gate toggle requires dual reviewer sign-off in enterprise mode.
 - Whether gate change should require process restart.
 
+---
+
+## 8. Approval Record Artifacts / 审批记录工件
+
+- Template:
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_Template.md`
+- Pre-filled draft:
+- `docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md`
