@@ -45,7 +45,8 @@ Write-Host '[phase8-smoke] job queue basics'
 $payloadFetch = '{\"package_id\":\"public_default.sample\"}'
 $payloadVerify = '{\"job_id\":\"download-demo\"}'
 
-Invoke-CargoStrict @('run','--','job','submit','--type','download.fetch','--payload',$payloadFetch,'--json')
+Invoke-CargoStrict @('run','--','job','submit','--type','download.fetch','--priority','100','--payload',$payloadFetch,'--json')
+Invoke-CargoStrict @('run','--','job','worker-run','--once','--json')
 $failedJobJson = (& cargo run --quiet -- job submit --type download.verify --payload $payloadVerify --simulate-failed --json)
 if ($LASTEXITCODE -ne 0) {
     throw "cargo run -- job submit (simulate-failed) failed with exit code $LASTEXITCODE"
@@ -55,6 +56,7 @@ if (-not $failedJob.job_id) {
     throw 'failed to parse job_id from simulate-failed submit output'
 }
 Invoke-CargoStrict @('run','--','job','list','--json','--limit','5')
+Invoke-CargoStrict @('run','--','job','list','--json','--status','success','--limit','5')
 Invoke-CargoStrict @('run','--','job','list','--json','--status','failed','--limit','5')
 Invoke-CargoStrict @('run','--','job','retry','--id',"$($failedJob.job_id)",'--json')
 

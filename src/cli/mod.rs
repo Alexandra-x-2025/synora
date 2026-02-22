@@ -158,6 +158,7 @@ enum JobCommand {
     Retry(JobRetryArgs),
     DeadletterList(JobDeadletterListArgs),
     ReplayDeadletter(JobReplayDeadletterArgs),
+    WorkerRun(JobWorkerRunArgs),
 }
 
 #[derive(Debug, Subcommand)]
@@ -576,6 +577,14 @@ struct JobReplayDeadletterArgs {
 }
 
 #[derive(Debug, Clone, Args)]
+struct JobWorkerRunArgs {
+    #[arg(long)]
+    once: bool,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Debug, Clone, Args)]
 struct RepoListArgs {
     #[arg(long)]
     limit: Option<u32>,
@@ -829,6 +838,7 @@ fn handle_job(command: JobCommand) -> Result<(), CliError> {
         JobCommand::Retry(args) => job_retry(args),
         JobCommand::DeadletterList(args) => job_deadletter_list(args),
         JobCommand::ReplayDeadletter(args) => job_replay_deadletter(args),
+        JobCommand::WorkerRun(args) => job_worker_run(args),
     }
 }
 
@@ -3135,6 +3145,172 @@ fn job_replay_deadletter(args: JobReplayDeadletterArgs) -> Result<(), CliError> 
     print_payload(args.json, payload, "Deadletter jobs replayed.")
 }
 
+#[derive(Debug, Clone)]
+struct ClaimedJob {
+    id: i64,
+    job_type: String,
+    payload_json: String,
+    priority: i64,
+    attempt_count: i64,
+    max_attempts: i64,
+    scheduled_at: i64,
+}
+
+fn validate_job_worker_run_args(args: &JobWorkerRunArgs) -> Result<(), CliError> {
+    if !args.once {
+        return Err(CliError::Usage(
+            "--once is currently required for job worker-run in this phase".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+fn claim_next_queued_job(conn: &mut Connection, now: i64) -> Result<Option<ClaimedJob>, CliError> {
+    let tx = conn.transaction()?;
+    let picked = tx
+        .query_row(
+            r#"
+            SELECT id, job_type, payload_json, priority, attempt_count, max_attempts, scheduled_at
+            FROM job_queue
+            WHERE status = 'queued' AND scheduled_at <= ?1
+            ORDER BY priority DESC, scheduled_at ASC, id ASC
+            LIMIT 1
+            "#,
+            params![now],
+            |row| {
+                Ok(ClaimedJob {
+                    id: row.get::<_, i64>(0)?,
+                    job_type: row.get::<_, String>(1)?,
+                    payload_json: row.get::<_, String>(2)?,
+                    priority: row.get::<_, i64>(3)?,
+                    attempt_count: row.get::<_, i64>(4)?,
+                    max_attempts: row.get::<_, i64>(5)?,
+                    scheduled_at: row.get::<_, i64>(6)?,
+                })
+            },
+        )
+        .optional()?;
+
+    if let Some(job) = &picked {
+        let changed = tx.execute(
+            r#"
+            UPDATE job_queue
+            SET status = 'running',
+                started_at = ?1,
+                finished_at = NULL,
+                last_error = ''
+            WHERE id = ?2 AND status = 'queued'
+            "#,
+            params![now, job.id],
+        )?;
+        if changed != 1 {
+            tx.rollback()?;
+            return Ok(None);
+        }
+    }
+
+    tx.commit()?;
+    Ok(picked)
+}
+
+fn execute_worker_job(job: &ClaimedJob) -> (bool, String) {
+    match job.job_type.as_str() {
+        "download.fetch" => (true, "worker executed download.fetch (simulated)".to_string()),
+        "download.verify" => {
+            let parsed = serde_json::from_str::<serde_json::Value>(&job.payload_json);
+            match parsed {
+                Err(e) => (
+                    false,
+                    format!("download.verify payload parse failed: {e}"),
+                ),
+                Ok(payload) => {
+                    let has_job_id = payload.get("job_id").and_then(|v| v.as_str()).is_some();
+                    let simulate_failure = payload
+                        .get("simulate_failure")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+                    if !has_job_id {
+                        (false, "download.verify payload missing job_id".to_string())
+                    } else if simulate_failure {
+                        (
+                            false,
+                            "worker simulated failure for download.verify".to_string(),
+                        )
+                    } else {
+                        (true, "worker executed download.verify (simulated)".to_string())
+                    }
+                }
+            }
+        }
+        _ => (
+            false,
+            format!("worker unsupported job_type: {}", job.job_type),
+        ),
+    }
+}
+
+fn job_worker_run(args: JobWorkerRunArgs) -> Result<(), CliError> {
+    validate_job_worker_run_args(&args)?;
+
+    let db_file = db_path()?;
+    init_db(&db_file)?;
+    let mut conn = Connection::open(db_file)?;
+    let started_at = unix_ts();
+
+    let claimed = claim_next_queued_job(&mut conn, started_at)?;
+    let Some(job) = claimed else {
+        let payload = json!({
+            "mode": "once",
+            "picked": false,
+            "message": "no queued job available"
+        });
+        return print_payload(args.json, payload, "No queued job available.");
+    };
+
+    let (ok, message) = execute_worker_job(&job);
+    let attempt_after = job.attempt_count + 1;
+    let (new_status, deadlettered, error_text) = if ok {
+        ("success", false, String::new())
+    } else if attempt_after >= job.max_attempts {
+        ("deadletter", true, message.clone())
+    } else {
+        ("failed", false, message.clone())
+    };
+    let finished_at = unix_ts();
+
+    conn.execute(
+        r#"
+        UPDATE job_queue
+        SET status = ?1,
+            attempt_count = ?2,
+            finished_at = ?3,
+            last_error = ?4
+        WHERE id = ?5
+        "#,
+        params![new_status, attempt_after, finished_at, error_text, job.id],
+    )?;
+
+    let payload = json!({
+        "mode": "once",
+        "picked": true,
+        "job_id": job.id,
+        "job_type": job.job_type,
+        "priority": job.priority,
+        "scheduled_at": job.scheduled_at,
+        "old_status": "queued",
+        "new_status": new_status,
+        "attempt_count": attempt_after,
+        "max_attempts": job.max_attempts,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "duration_ms": (finished_at - started_at) * 1000,
+        "deadlettered": deadlettered,
+        "message": if ok { "worker execution completed" } else if deadlettered { "worker execution failed and moved to deadletter" } else { "worker execution failed" },
+        "error": if ok { "" } else { message.as_str() }
+    });
+    print_payload(args.json, payload, "Worker run finished.")
+}
+
 fn repo_list(args: RepoListArgs) -> Result<(), CliError> {
     let limit = i64::from(args.limit.unwrap_or(100));
     let offset = i64::from(args.offset.unwrap_or(0));
@@ -4890,6 +5066,16 @@ mod tests {
     #[test]
     fn validate_job_type_rejects_unknown() {
         let err = validate_job_type("unknown.type").unwrap_err();
+        assert!(matches!(err, CliError::Usage(_)));
+    }
+
+    #[test]
+    fn validate_job_worker_run_args_requires_once() {
+        let err = validate_job_worker_run_args(&JobWorkerRunArgs {
+            once: false,
+            json: true,
+        })
+        .unwrap_err();
         assert!(matches!(err, CliError::Usage(_)));
     }
 }
