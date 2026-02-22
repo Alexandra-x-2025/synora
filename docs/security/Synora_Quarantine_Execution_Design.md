@@ -196,6 +196,8 @@ Recommended release controls:
 - Keep mutation disabled by default in all non-release profiles.
 - Require explicit operator intent plus confirm gate for high/critical risk.
 - Record release gate version in audit metadata.
+- Reference gate strategy draft:
+- `docs/security/Synora_Real_Mutation_Gate_Strategy_Draft.md`
 
 ---
 

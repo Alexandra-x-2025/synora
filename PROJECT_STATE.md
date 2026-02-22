@@ -82,6 +82,7 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - Security review completion
 - Adapter-level rollback simulation sign-off
 - Registry backup blob format hardening plan
+- Real mutation gate strategy draft and approval
 
 ## 进行中
 
@@ -89,6 +90,7 @@ Phase 3 – Stability & Ecosystem (Security Sign-off Preparation)
 - 安全评审完成
 - 适配器层回滚模拟签署
 - 注册表备份数据格式加固计划
+- 真实变更开关策略草案评审与批准
 
 ---
 

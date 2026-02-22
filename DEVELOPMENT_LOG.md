@@ -1074,3 +1074,27 @@ Examples:
 - 新增真实变更启用的上线准入条件
 - 在 cleanup CLI 契约草案中增加实现状态矩阵
 - 将待决策项同步到发布开关策略
+
+---
+
+## 2026-02-22 – Real Mutation Gate Strategy Draft Added
+
+### English
+
+- Added:
+- `docs/security/Synora_Real_Mutation_Gate_Strategy_Draft.md`
+- Proposed three-layer gate model:
+- policy sign-off gate
+- runtime config gate
+- command confirmation/risk gate
+- Kept real mutation default-off and auditable-by-design
+
+### 中文
+
+- 新增：
+- `docs/security/Synora_Real_Mutation_Gate_Strategy_Draft.md`
+- 提出三层门禁模型：
+- 策略签署门禁
+- 运行时配置门禁
+- 命令确认/风险门禁
+- 保持真实变更默认关闭，并确保全程可审计
