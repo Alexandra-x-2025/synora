@@ -238,6 +238,28 @@ Ready to enter CLI development phase.
 - `docs/architecture/Synora_Enterprise_Architecture_Master_Plan.md`
 - Synced README with:
 - updated CLI frozen command syntax
+
+---
+
+## 2026-02-22 – Source Suggestion Signal Upgrade
+
+### English
+
+- Upgraded `source suggest` scoring pipeline:
+- Added update-check signal blending (when update candidates are detected, recommendation score is boosted with explicit reasons)
+- Kept failure posture safe:
+- If update probing is unavailable, recommendation still falls back to repository-only scoring
+- Added unit test for score boost behavior under update signal
+- Synced `docs/cli-spec-v0.1.md` to reflect the new signal model
+
+### 中文
+
+- 升级 `source suggest` 评分链路：
+- 引入更新信号融合（检测到可更新候选时，提升推荐分并给出明确原因）
+- 保持安全降级策略：
+- 当更新探测不可用时，仍回退到仅基于本地仓库的推荐
+- 新增更新信号加分行为的单元测试
+- 同步 `docs/cli-spec-v0.1.md` 反映新评分模型
 - project structure tree
 - structure rationale
 

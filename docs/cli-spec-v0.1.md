@@ -110,6 +110,7 @@ Notes:
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.
+- Blend update-check signal into recommendation score when update candidates are detected.
 
 Output:
 - Default: table with score and reasons

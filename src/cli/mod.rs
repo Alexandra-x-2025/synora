@@ -271,7 +271,7 @@ fn handle_source(args: &[String]) -> Result<i32, String> {
     }
 
     let service = SourceSuggestionService::default();
-    match service.suggest_from_repository() {
+    match service.suggest_from_signals() {
         Ok(items) => {
             if as_json {
                 print_source_suggestions_json(&items);
