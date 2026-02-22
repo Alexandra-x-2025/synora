@@ -1258,3 +1258,21 @@ Examples:
 - `--enable`/`--disable` 必须二选一
 - 启用门禁时必须提供 `--approval-record`
 - 补充 CLI 与 repository 测试，覆盖参数校验与持久化行为。
+
+---
+
+## 2026-02-22 – Gate-Set Safety Confirmation and Keep-Record Semantics
+
+### English
+
+- Hardened `config gate-set` contract:
+- `--enable` now requires explicit `--confirm`
+- `--keep-record` is valid only with `--disable`
+- Added state visibility sync in `PROJECT_STATE.md` for gate control plane
+
+### 中文
+
+- 强化 `config gate-set` 契约：
+- 启用门禁时新增强制 `--confirm`
+- `--keep-record` 仅允许与 `--disable` 配合
+- 在 `PROJECT_STATE.md` 同步门禁控制面可见性状态

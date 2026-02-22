@@ -495,8 +495,10 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
         }
         "gate-set" => {
             let mut enable_flag: Option<bool> = None;
-            let mut gate_version = "phase3-draft-v1".to_string();
+            let mut gate_version: Option<String> = None;
             let mut approval_record_ref = String::new();
+            let mut confirm = false;
+            let mut keep_record = false;
             let mut as_json = false;
 
             let mut idx = 1usize;
@@ -523,7 +525,7 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                             eprintln!("Validation error: --gate-version requires a value");
                             return Ok(EXIT_USAGE);
                         }
-                        gate_version = args[idx + 1].clone();
+                        gate_version = Some(args[idx + 1].clone());
                         idx += 2;
                     }
                     "--approval-record" => {
@@ -533,6 +535,14 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                         }
                         approval_record_ref = args[idx + 1].clone();
                         idx += 2;
+                    }
+                    "--confirm" => {
+                        confirm = true;
+                        idx += 1;
+                    }
+                    "--keep-record" => {
+                        keep_record = true;
+                        idx += 1;
                     }
                     "--json" => {
                         as_json = true;
@@ -549,13 +559,45 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 eprintln!("Validation error: one of --enable/--disable is required");
                 return Ok(EXIT_USAGE);
             };
+            if enabled && !confirm {
+                eprintln!("Validation error: --confirm is required when --enable is used");
+                return Ok(EXIT_USAGE);
+            }
+            if enabled && keep_record {
+                eprintln!("Validation error: --keep-record can only be used with --disable");
+                return Ok(EXIT_USAGE);
+            }
             if enabled && approval_record_ref.trim().is_empty() {
                 eprintln!("Validation error: --approval-record is required when --enable is used");
                 return Ok(EXIT_USAGE);
             }
 
             let repo = ConfigRepository::default();
-            let write_path = match repo.set_execution_gate(enabled, &gate_version, &approval_record_ref) {
+            let current = match repo.load_execution_gate() {
+                Ok(gate) => gate,
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+            };
+            let final_gate_version = gate_version.unwrap_or_else(|| current.gate_version.clone());
+            let final_approval_record = if enabled {
+                approval_record_ref
+            } else if keep_record {
+                if approval_record_ref.trim().is_empty() {
+                    current.approval_record_ref.clone()
+                } else {
+                    approval_record_ref
+                }
+            } else {
+                String::new()
+            };
+
+            let write_path = match repo.set_execution_gate(
+                enabled,
+                &final_gate_version,
+                &final_approval_record,
+            ) {
                 Ok(path) => path,
                 Err(err) => {
                     eprintln!("Integration failure: {err}");
@@ -775,7 +817,7 @@ fn print_config_help() {
     println!("   or: synora config audit-summary [--json]");
     println!("   or: synora config gate-show [--json]");
     println!(
-        "   or: synora config gate-set (--enable|--disable) [--approval-record <ref>] [--gate-version <version>] [--json]"
+        "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--keep-record] [--json]"
     );
 }
 
@@ -1086,6 +1128,36 @@ mod tests {
     fn config_gate_set_enable_requires_approval_record() {
         let code = dispatch(&args(&["config", "gate-set", "--enable", "--json"]))
             .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_set_enable_requires_confirm() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-set",
+            "--enable",
+            "--approval-record",
+            "docs/security/record.md",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_set_keep_record_requires_disable() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-set",
+            "--enable",
+            "--confirm",
+            "--approval-record",
+            "docs/security/record.md",
+            "--keep-record",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 

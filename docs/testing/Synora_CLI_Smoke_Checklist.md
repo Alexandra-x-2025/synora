@@ -21,7 +21,7 @@ Quick regression checks for CLI contract and integration behavior.
 11. `cargo run -- config history-list --json`
 12. `cargo run -- config audit-summary --json`
 13. `cargo run -- config gate-show --json`
-14. `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
+14. `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --json`
 15. `cargo run -- config gate-show --json`
 16. `cargo run -- source suggest --json`
 17. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
