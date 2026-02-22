@@ -972,3 +972,19 @@ Examples:
 - 强制规则：`high`/`critical` 风险必须显式 `--confirm`
 - 违规映射到安全退出码 `3`
 - 新增 CLI 测试覆盖高风险阻断与确认放行场景
+
+---
+
+## 2026-02-22 – Phase 3 Documentation Closure: Gate Ready for Security Sign-off
+
+### English
+
+- Updated Phase 3 gate status to `Ready for Security Sign-off`
+- Synced project state and roadmap with current gate readiness
+- Kept real-mutation go-live blocked until security sign-off is complete
+
+### 中文
+
+- 将 Phase 3 门禁状态更新为 `Ready for Security Sign-off`
+- 同步项目状态与路线图，反映当前门禁就绪状态
+- 继续保持真实变更上线阻断，直至 security 签署完成

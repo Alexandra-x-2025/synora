@@ -1,7 +1,7 @@
 # Synora -- Phase 3 Quarantine Implementation Gate
 
 Date baseline: 2026-02-22
-Status: Active Gate Checklist (reviewed on 2026-02-22)
+Status: Ready for Security Sign-off (reviewed on 2026-02-22)
 Scope: Must pass before enabling real quarantine mutation path
 
 ## 1. Contract Freeze
@@ -66,3 +66,10 @@ Scope: Must pass before enabling real quarantine mutation path
 
 - Go (simulation path): `cleanup quarantine` dry-run/confirm simulation flows are acceptable for Phase 3 development and testing.
 - No-Go (real mutation path): blocked until all Security Controls are completed and security review is signed off.
+
+## 9. Gate State / 门禁状态
+
+- Current state: Ready for Security Sign-off
+- Blocking items before real mutation Go-Live:
+- Security review sign-off
+- Integration rollback simulation sign-off at adapter level

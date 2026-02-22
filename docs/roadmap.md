@@ -140,6 +140,8 @@ Kickoff update:
 - symbolic-link escape blocking implemented for cleanup path
 - Security control progress:
 - HIGH/CRITICAL risk confirmation gate implemented (`--risk high|critical` requires `--confirm`)
+- Gate state:
+- quarantine simulation gate is now ready for security sign-off
 
 ---
 
@@ -179,3 +181,5 @@ Kickoff update:
 - cleanup 路径已实现 symbolic-link escape 拦截
 - 安全控制进展：
 - 已实现 HIGH/CRITICAL 风险确认门禁（`--risk high|critical` 需 `--confirm`）
+- 门禁状态：
+- quarantine 模拟门禁已进入 security 签署准备
