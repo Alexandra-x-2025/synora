@@ -1344,3 +1344,19 @@ Examples:
 - 为 `config gate-history` 新增 `--since <unix_ts>`。
 - 支持与 `--enabled-only`、`--limit` 组合过滤。
 - 补充 CLI 参数校验测试（缺值/非法值）及组合成功路径测试。
+
+---
+
+## 2026-02-22 – CLI Test Runtime Isolation (`SYNORA_HOME`)
+
+### English
+
+- Added isolated CLI test dispatcher that runs each test command with a unique temporary `SYNORA_HOME`.
+- Added global env lock to avoid cross-test env races during parallel test execution.
+- Prevents CLI tests from polluting developer runtime audit/config data.
+
+### 中文
+
+- 新增 CLI 测试隔离调度器：每次测试命令使用独立临时 `SYNORA_HOME`。
+- 增加全局环境锁，避免并行测试时环境变量竞争。
+- 避免测试污染开发者真实运行时配置与审计数据。

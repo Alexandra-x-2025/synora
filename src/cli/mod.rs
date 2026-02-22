@@ -1235,13 +1235,52 @@ mod tests {
     };
     use crate::integration::IntegrationError;
     use crate::security::SecurityError;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use std::sync::{Mutex, OnceLock};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn env_lock() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    fn unique_test_home(prefix: &str) -> PathBuf {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!("{prefix}-{now}-{seq}"))
+    }
+
+    fn dispatch_isolated(args: &[String]) -> Result<i32, String> {
+        let _guard = env_lock()
+            .lock()
+            .expect("test env lock should not be poisoned");
+        let previous = std::env::var("SYNORA_HOME").ok();
+        let test_home = unique_test_home("synora-cli-test-home");
+        std::fs::create_dir_all(&test_home)
+            .map_err(|err| format!("failed to create test home: {err}"))?;
+        std::env::set_var("SYNORA_HOME", &test_home);
+
+        let result = dispatch(args);
+
+        match previous {
+            Some(v) => std::env::set_var("SYNORA_HOME", v),
+            None => std::env::remove_var("SYNORA_HOME"),
+        }
+        let _ = std::fs::remove_dir_all(test_home);
+        result
+    }
 
     fn args(parts: &[&str]) -> Vec<String> {
         parts.iter().map(|v| (*v).to_string()).collect()
     }
 
     fn ensure_gate_disabled_for_test() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-set",
             "--disable",
@@ -1255,13 +1294,13 @@ mod tests {
 
     #[test]
     fn update_apply_missing_id_returns_usage() {
-        let code = dispatch(&args(&["update", "apply"])).expect("dispatch should return exit code");
+        let code = dispatch_isolated(&args(&["update", "apply"])).expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn update_apply_conflicting_flags_returns_usage() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "update",
             "apply",
             "--id",
@@ -1275,7 +1314,7 @@ mod tests {
 
     #[test]
     fn update_apply_yes_alias_returns_ok() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "update", "apply", "--id", "Git.Git", "--yes", "--json",
         ]))
         .expect("dispatch should return exit code");
@@ -1284,119 +1323,119 @@ mod tests {
 
     #[test]
     fn software_list_verbose_returns_ok() {
-        let code = dispatch(&args(&["software", "list", "--verbose"]))
+        let code = dispatch_isolated(&args(&["software", "list", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn update_check_verbose_returns_ok() {
-        let code = dispatch(&args(&["update", "check", "--verbose"]))
+        let code = dispatch_isolated(&args(&["update", "check", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_db_list_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "db-list", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "db-list", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_history_list_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "history-list", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "history-list", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_audit_summary_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "audit-summary", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "audit-summary", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_show_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "gate-show", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "gate-show", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_show_json_returns_ok() {
-        let code = dispatch(&args(&["config", "gate-show", "--json"]))
+        let code = dispatch_isolated(&args(&["config", "gate-show", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_gate_show_verbose_returns_ok() {
-        let code = dispatch(&args(&["config", "gate-show", "--verbose"]))
+        let code = dispatch_isolated(&args(&["config", "gate-show", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_gate_history_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "gate-history", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_history_limit_missing_value_returns_usage() {
-        let code = dispatch(&args(&["config", "gate-history", "--limit"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--limit"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_history_limit_invalid_returns_usage() {
-        let code = dispatch(&args(&["config", "gate-history", "--limit", "0"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--limit", "0"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_history_since_missing_value_returns_usage() {
-        let code = dispatch(&args(&["config", "gate-history", "--since"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--since"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_history_since_invalid_returns_usage() {
-        let code = dispatch(&args(&["config", "gate-history", "--since", "-1"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--since", "-1"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_history_json_returns_ok() {
-        let code = dispatch(&args(&["config", "gate-history", "--json"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_gate_history_enabled_only_returns_ok() {
-        let code = dispatch(&args(&["config", "gate-history", "--enabled-only"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--enabled-only"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_gate_history_limit_returns_ok() {
-        let code = dispatch(&args(&["config", "gate-history", "--limit", "10", "--json"]))
+        let code = dispatch_isolated(&args(&["config", "gate-history", "--limit", "10", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
     #[test]
     fn config_gate_history_since_returns_ok() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-history",
             "--enabled-only",
@@ -1412,28 +1451,28 @@ mod tests {
 
     #[test]
     fn config_gate_set_rejects_unknown_flag() {
-        let code = dispatch(&args(&["config", "gate-set", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["config", "gate-set", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_set_requires_mode() {
-        let code = dispatch(&args(&["config", "gate-set", "--json"]))
+        let code = dispatch_isolated(&args(&["config", "gate-set", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_set_enable_requires_approval_record() {
-        let code = dispatch(&args(&["config", "gate-set", "--enable", "--json"]))
+        let code = dispatch_isolated(&args(&["config", "gate-set", "--enable", "--json"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn config_gate_set_enable_requires_confirm() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-set",
             "--enable",
@@ -1447,7 +1486,7 @@ mod tests {
 
     #[test]
     fn config_gate_set_keep_record_requires_disable() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-set",
             "--enable",
@@ -1463,7 +1502,7 @@ mod tests {
 
     #[test]
     fn config_gate_set_enable_dry_run_without_confirm_returns_ok() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-set",
             "--enable",
@@ -1478,7 +1517,7 @@ mod tests {
 
     #[test]
     fn config_gate_set_requires_reason_when_not_dry_run() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "config",
             "gate-set",
             "--disable",
@@ -1490,14 +1529,14 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_missing_id_returns_usage() {
-        let code = dispatch(&args(&["cleanup", "quarantine", "--dry-run"]))
+        let code = dispatch_isolated(&args(&["cleanup", "quarantine", "--dry-run"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn cleanup_quarantine_conflicting_flags_returns_usage() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1511,7 +1550,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_dry_run_json_returns_ok() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1526,7 +1565,7 @@ mod tests {
     #[test]
     fn cleanup_quarantine_confirm_json_returns_security_when_gate_disabled() {
         ensure_gate_disabled_for_test();
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1540,7 +1579,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_simulation_requires_confirm() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1553,7 +1592,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_rollback_simulation_requires_failure_flag() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1568,7 +1607,7 @@ mod tests {
     #[test]
     fn cleanup_quarantine_confirm_simulated_failure_returns_security_when_gate_disabled() {
         ensure_gate_disabled_for_test();
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1583,7 +1622,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_high_risk_requires_confirm() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1599,7 +1638,7 @@ mod tests {
     #[test]
     fn cleanup_quarantine_high_risk_with_confirm_returns_security_when_gate_disabled() {
         ensure_gate_disabled_for_test();
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1615,7 +1654,7 @@ mod tests {
 
     #[test]
     fn cleanup_quarantine_traversal_target_returns_security() {
-        let code = dispatch(&args(&[
+        let code = dispatch_isolated(&args(&[
             "cleanup",
             "quarantine",
             "--id",
@@ -1629,14 +1668,14 @@ mod tests {
 
     #[test]
     fn source_suggest_rejects_unknown_flag() {
-        let code = dispatch(&args(&["source", "suggest", "--bad-flag"]))
+        let code = dispatch_isolated(&args(&["source", "suggest", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn source_suggest_verbose_returns_ok() {
-        let code = dispatch(&args(&["source", "suggest", "--verbose"]))
+        let code = dispatch_isolated(&args(&["source", "suggest", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
