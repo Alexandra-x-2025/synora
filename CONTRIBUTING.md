@@ -1,51 +1,31 @@
-# Contributing to Synora
+# CONTRIBUTING
 
-Thank you for contributing.
+## 文档目的
+定义协作、提交、评审与合并规范。
 
-Synora is safety-first.
-Security boundaries must not be weakened.
+## 当前状态
+- 状态：占位
+- 协作流程：未冻结
 
----
+## 上下文输入
+- 开发模式：AI + 人类协作
+- 当前阶段：仅模板搭建
 
-# 参与 Synora
+## 预期输出
+- 贡献者可以按统一流程提交改动
+- 提交质量有最低门槛
 
-感谢你的贡献。
+## 待决策
+- 分支命名策略
+- 提交信息规范
+- PR 审核规则
 
-Synora 以安全为核心。
-不得削弱安全边界。
+## 待补清单
+- [ ] 分支流程
+- [ ] Commit 规范
+- [ ] PR 模板
+- [ ] 合并条件
 
----
-
-## Architecture Rules
-
-- No direct file deletion
-- No HKLM registry modification by default
-- No arbitrary shell execution
-- All installer runs via Security Guard
-
----
-
-## 架构规则
-
-- 禁止直接删除文件
-- 默认禁止 HKLM 注册表修改
-- 禁止任意 shell 执行
-- 所有安装操作必须通过安全守卫
-
----
-
-## PR Checklist
-
-- Safe?
-- Recoverable?
-- Explainable?
-- Tested?
-
----
-
-## PR 检查清单
-
-- 是否安全？
-- 是否可恢复？
-- 是否可解释？
-- 是否测试？
+## 更新规则
+- 流程变更时同步更新并在开发日志登记。
+- 与 CI/测试要求冲突时以更严格规则为准。

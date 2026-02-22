@@ -1,19 +1,5 @@
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Local runtime artifacts
-.synora/
-.synora*/
-.synora*/logs/
-.synora*/logs/*.log
-
-# Test artifacts
-.pytest_cache/
-.coverage
-
-# Rust build artifacts
-target/
-
-# IDE
+/target
+/.synora
+/.synora_custom
 .vscode/
+.DS_Store

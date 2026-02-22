@@ -1,271 +1,94 @@
-<p align="center">
-  <img src="assets/logo/synora-icon.svg" width="180" />
-</p>
-
-# Synora
-
-# Synora
-
-Intelligent terminal-first software manager for Windows, focused on safety, transparency, and recoverability.
-
----
-
-# Synora
-
-面向 Windows 的智能终端优先软件管理工具，专注于安全性、透明性与可恢复性。
-
----
-
-## ✨ Overview
-
-Synora is a safety-first software lifecycle manager.
-
-It helps users:
-
-- Discover installed software
-- Check updates via winget / GitHub
-- Apply updates with confirmation
-- Manage uninstall workflows
-- Clean leftovers safely (move → quarantine)
-- Backup & restore registry cleanup (HKCU only)
-
-Synora does not prioritize automation.
-It prioritizes control, explainability, and recoverability.
-
----
-
-## ✨ 项目概述
-
-Synora 是一个以安全为核心的软件生命周期管理工具。
-
-支持：
-
-- 已安装软件发现
-- 通过 winget / GitHub 检查更新
-- 手动确认更新执行
-- 卸载流程管理
-- 残留清理（移动至隔离区，而非直接删除）
-- 注册表清理前备份与恢复（仅 HKCU）
-
-Synora 不追求“完全自动化”，  
-而追求“可控、可解释、可恢复”。
-
----
-
-## 🔐 Security Philosophy
-
-- No destructive deletion (quarantine first)
-- No hidden silent installers
-- No automatic registry modification
-- No telemetry
-- No arbitrary command execution
-
----
-
-## 🔐 安全原则
-
-- 不做不可恢复删除（优先隔离）
-- 不隐藏静默安装
-- 不自动修改注册表
-- 不收集遥测数据
-- 不允许任意命令执行
-
----
-
-## 🏗 Architecture
-
-Layered architecture:
-
-Domain  
-→ Repository  
-→ Service  
-→ Worker (Task Engine)  
-→ Integration  
-→ Security Guard  
-
-See: `docs/architecture-overview.md`
-
----
-
-## 🏗 架构
-
-分层架构：
-
-Domain  
-→ Repository  
-→ Service  
-→ Worker（任务引擎）  
-→ Integration  
-→ Security Guard（安全守卫）
-
-详见：`docs/architecture-overview.md`
-
----
-
-## 🚀 Roadmap
-
-v0.x – CLI MVP  
-v1.x – Stable CLI  
-v2.x – Extended sources & intelligence  
-
-Current: Phase 1 (CLI MVP in progress)
-
-CLI spec: `docs/cli-spec-v0.1.md`
-
----
-
-## 🧪 CLI v0.1 Commands
-
-`synora software list [--json]`  
-`synora update check [--json]`  
-`synora update apply --id <package_id> [--dry-run | --confirm] [--json]`  
-`synora config init`  
-`synora config gate-show [--json] [--verbose]`  
-`synora config gate-history [--json] [--enabled-only] [--limit <n>] [--since <unix_ts>]`  
-`synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]`
-
-Compatibility: `--yes` is still accepted as an alias of `--confirm`.
-
----
-
-## 🔐 Gate Operation Quick Guide
-
-Preview current gate:
-- `cargo run -- config gate-show --json`
-
-Preview enablement without writing:
-- `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --dry-run --json`
-
-Enable gate (requires explicit confirm):
-- `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --reason "pilot enable" --json`
-
-Disable gate and keep approval reference:
-- `cargo run -- config gate-set --disable --keep-record --reason "rollback to safe default" --json`
-
-Show gate change history:
-- `cargo run -- config gate-history --json`
-
-Show last 5 enable events only:
-- `cargo run -- config gate-history --enabled-only --limit 5 --json`
-
-Show enable events since a timestamp:
-- `cargo run -- config gate-history --enabled-only --since 1771730000 --json`
-
----
-
-## 🦀 Rust Quick Start
-
-Prerequisites:
-- Rust toolchain installed (`cargo`)
-- Windows with `winget` available (for real integration behavior)
-
-Run:
-- `cargo check`
-- `cargo test`
-- `cargo run -- software list --json`
-- `cargo run -- update check --json`
-- `cargo run -- config init`
-
-Smoke checklist:
-- `docs/testing/Synora_CLI_Smoke_Checklist.md`
-- `docs/testing/Phase1_MVP_Readiness_Checklist.md`
-
----
-
-## 🦀 Rust 快速开始
-
-前置条件：
-- 已安装 Rust 工具链（`cargo`）
-- Windows 环境可用 `winget`（用于真实集成行为）
-
-运行命令：
-- `cargo check`
-- `cargo test`
-- `cargo run -- software list --json`
-- `cargo run -- update check --json`
-- `cargo run -- config init`
-
-## 📁 Project Structure
-
-```
-synora/
-├── README.md
-├── LICENSE
-├── CHANGELOG.md
-├── SECURITY.md
-├── CONTRIBUTING.md
-├── PROJECT_STATE.md
-├── ARCHITECTURE_DECISIONS.md
-├── DEVELOPMENT_LOG.md
-├── assets/
-│   └── logo/
-├── docs/
-│   ├── architecture/
-│   ├── security/
-│   ├── testing/
-│   ├── product/
-│   ├── roadmap.md
-│   └── architecture-overview.md
-├── src/
-├── tests/
-└── .github/
-```
-
----
-
-## 🧠 Structure Rationale
-
-Root:
-- Governance files: `README`, `SECURITY`, `CONTRIBUTING`
-- State and decision files: `PROJECT_STATE`, `ARCHITECTURE_DECISIONS`
-- Development timeline: `DEVELOPMENT_LOG`
-
-`docs/architecture/`:
-- Core technical documents
-- Design plans, interface contracts, data design, tech stack
-
-`docs/security/`:
-- Security threat model and future audit reports
-
-`docs/testing/`:
-- Testing strategy and CI/QA approach
-
-`docs/product/`:
-- Product strategy and roadmap artifacts
-
----
-
-## 📁 项目结构说明
-
-根目录放置：
-- 治理类文件（`README` / `SECURITY` / `CONTRIBUTING`）
-- 状态与决策文件（`PROJECT_STATE` / `ARCHITECTURE_DECISIONS`）
-- 开发日志（`DEVELOPMENT_LOG`）
-
-这些属于“项目元信息”。
-
-`docs/` 分层：
-- `architecture/`：核心技术文档（设计书、接口规范、数据设计、技术选型）
-- `security/`：威胁模型与后续审计类文档
-- `testing/`：测试与 CI/QA 策略
-- `product/`：产品战略与路线图
-
----
-
-## 🚀 路线图
-
-v0.x – CLI 最小可用版本  
-v1.x – 稳定 CLI 版本  
-v2.x – 扩展来源与智能能力  
-
----
-
-## 📜 License
-
-MIT License
-
----
-
-## 📜 许可证
-
-MIT 许可证
+# README
+
+## 文档目的
+作为项目入口，说明仓库当前状态与导航路径。
+
+## 当前状态
+- 状态：v0.2 实现中（CLI 基线可运行）
+- 设计阶段：已冻结
+- 实现阶段：进行中（source/update 主链路已打通）
+
+## 上下文输入
+- 项目名：Synora
+- 类型：AI 驱动的软件操作系统管理器（Draft）
+- 当前约束：仅搭建文档与目录，不进入详细设计
+
+## Vision（Draft）
+- Synora 终极愿景：`Windows 的 Raycast + Homebrew + AI 安全编排层`。
+- 主线 1（入口层）：全局搜索即操作（Raycast 风格）。
+- 主线 2（供给层）：公共/个人软件仓库 + `software.yaml`（Homebrew 风格）。
+- 主线 3（控制层）：AI 建议 + 安全门禁 + 全链路审计（Synora 差异化）。
+
+## 预期输出
+- 读者可快速定位所有核心文档
+- 明确当前不包含最终架构/接口结论
+
+## 项目定位决策（Phase 1 Freeze）
+- 项目一句话定位：`Synora 是 AI 驱动的软件操作系统管理器（Local-first + 安全门禁 + 审计可追溯）`。
+- 首个冻结范围：`架构 + API 契约 + 数据模型` 三件套先冻结，其余设计按冻结清单分批完成。
+
+## 项目概述
+Synora 是一个本地优先、AI 驱动的软件操作系统管理器，目标是将“软件发现、来源补链、下载校验、安装更新、风险控制、审计追溯”统一到一个可控流程中。
+
+## 技术栈摘要（Draft）
+- 语言与运行时：Rust（CLI-first，后续扩展桌面端）
+- 数据存储：SQLite（本地审计与状态存储）
+- 配置与仓库：JSON + YAML（`software.yaml`）
+- 系统集成：Windows Registry / winget（MVP）
+- AI 接入：Provider 抽象层（本地优先，可切换）
+
+## 快速启动（实现阶段）
+1. 运行 `cargo check`。
+2. 初始化：`cargo run -- config init --json`。
+3. 扫描入库：`cargo run -- software discover scan --json`。
+4. 来源建议：`cargo run -- source suggest --json --limit 20`。
+5. 完整回归：见 `docs/CLI_SMOKE_TESTS.md`。
+
+## 当前可用命令矩阵
+- `config`
+1. `config init`
+2. `config gate-show`
+3. `config gate-set`
+4. `config gate-history`
+- `software`
+1. `software discover scan`
+2. `software list`
+- `source`
+1. `source suggest`
+2. `source review`
+3. `source review-bulk`
+4. `source list`
+5. `source apply-approved`
+6. `source registry-list`
+7. `source registry-disable`
+8. `source registry-enable`
+- `update`
+1. `update check`
+2. `update apply`（`--confirm` 需 `--execution-ticket`）
+3. `update history`
+- `ai`
+1. `ai analyze`（plan-only）
+2. `ai recommend`（plan-only）
+3. `ai repair-plan`（plan-only，不触发真实变更）
+- `ui`
+1. `ui search`（聚合只读搜索入口）
+2. `ui action-run`（高风险动作需 `--confirm`）
+- `job`
+1. `job submit`
+2. `job list`
+3. `job retry`
+4. `job deadletter-list`
+5. `job replay-deadletter`
+- `cleanup`
+1. `cleanup apply`（`--confirm` 需 `--execution-ticket`）
+2. `cleanup history`
+
+## 目录结构说明（当前）
+- `docs/`：产品、架构、接口、数据模型与策略草案
+- `decisions/`：ADR 与关键架构决策记录
+- `logs/`：开发与冻结过程日志
+- `src/`：实现代码（当前不作为本轮设计主焦点）
+
+## 更新规则
+- 当文档目录或阶段变化时必须同步更新。
+- 仅记录已确认信息，不写推测性结论。
