@@ -6,6 +6,8 @@ Scope: Required before real cleanup mutation go-live
 
 Reference draft:
 - `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
+Approval record template:
+- `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
 
 ## 1. Review Scope Confirmation
 

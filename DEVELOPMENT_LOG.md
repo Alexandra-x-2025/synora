@@ -1022,3 +1022,19 @@ Examples:
 - `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
 - 已将有证据支撑的条目标记为完成
 - 审批与签字字段保留待正式安全决策填写
+
+---
+
+## 2026-02-22 – Phase 3 Approval Record Template Added
+
+### English
+
+- Added single-page approval template:
+- `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
+- Designed for direct reuse in PR description or release notes
+
+### 中文
+
+- 新增单页审批模板：
+- `docs/security/Synora_Security_Signoff_Approval_Record_Template.md`
+- 可直接复用到 PR 描述或发布说明
