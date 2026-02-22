@@ -4,6 +4,9 @@ __pycache__/
 
 # Local runtime artifacts
 .synora/
+.synora*/
+.synora*/logs/
+.synora*/logs/*.log
 
 # Test artifacts
 .pytest_cache/

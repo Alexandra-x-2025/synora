@@ -1,6 +1,6 @@
 # Synora – Project State
 
-Current date reference: 2026-02-21
+Current date reference: 2026-02-22
 
 ---
 
@@ -12,11 +12,11 @@ Current date reference: 2026-02-21
 
 ## Current Phase
 
-Phase 1 – CLI MVP (In Progress)
+Phase 2 – Planning & Intelligence Layer Kickoff
 
 ## 当前阶段
 
-阶段 1 – CLI 最小可用版本（进行中）
+阶段 2 – 规划与智能层启动
 
 ---
 
@@ -31,6 +31,8 @@ Phase 1 – CLI MVP (In Progress)
 - Rust project bootstrap: Started
 - Python prototype archive: Completed (`legacy/python/`)
 - Rust config/logging path alignment: Completed (`SYNORA_HOME` aware)
+- Phase 1 MVP readiness checklist: Completed
+- Phase 2 weekly planning: Started
 
 ---
 
@@ -45,6 +47,8 @@ Phase 1 – CLI MVP (In Progress)
 - Rust 工程初始化：已开始
 - Python 原型归档：已完成（`legacy/python/`）
 - Rust 配置与日志路径对齐：已完成（支持 `SYNORA_HOME`）
+- Phase 1 MVP 就绪检查：已完成
+- Phase 2 周计划：已启动
 
 ---
 
@@ -54,6 +58,7 @@ Phase 1 – CLI MVP (In Progress)
 - CLI v0.1 command contract freeze
 - Exit code contract hardening (`2/3/4/10`)
 - README structure rationale sync
+- Phase 1 MVP readiness gate passed (2026-02-22)
 
 ## 已完成
 
@@ -61,29 +66,32 @@ Phase 1 – CLI MVP (In Progress)
 - CLI v0.1 命令契约冻结
 - 退出码契约加固（`2/3/4/10`）
 - README 目录结构解释同步
+- Phase 1 MVP 就绪门禁通过（2026-02-22）
 
 ---
 
 ## In Progress
 
-- Winget integration reliability and error observability
-- Alignment between architecture docs and implementation details
+- Phase 2 Week 1 planning execution:
+- SQLite schema and repository contract draft
+- Data model consistency review
 
 ## 进行中
 
-- Winget 集成可靠性与错误可观测性增强
-- 架构文档与实现细节的持续对齐
+- Phase 2 第 1 周计划执行：
+- SQLite schema 与 repository 契约草案
+- 数据模型一致性评审
 
 ---
 
 ## Next
 
-- Implement SQLite schema and repository contract
-- Map security threat model to executable checks
-- Expand contract tests for integration adapters
+- Implement Phase 2 Week 1 deliverables (schema + repository)
+- Start source suggestion prototype (Week 2)
+- Expand integration and scoring tests
 
 ## 下一步
 
-- 落地 SQLite schema 与 repository 契约
-- 将安全威胁模型映射为可执行检查
-- 扩展集成适配器契约测试
+- 落地 Phase 2 第 1 周交付（schema + repository）
+- 启动来源推荐原型（第 2 周）
+- 扩展集成与评分测试
