@@ -120,6 +120,9 @@ Kickoff update:
 - Added cleanup CLI contract draft:
 - `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
 - Defined CLI flags, output schema, and failure semantics for Phase 3 execution path
+- Added module-level implementation workplan:
+- `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
+- Defined service/repository/security/integration/cli execution order and milestones
 
 ---
 
@@ -139,3 +142,6 @@ Kickoff update:
 - 已新增 cleanup CLI 契约草案：
 - `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
 - 明确了 Phase 3 执行路径的参数规则、输出字段与失败语义
+- 已新增模块级实施任务分解：
+- `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
+- 明确了 service/repository/security/integration/cli 的执行顺序与里程碑

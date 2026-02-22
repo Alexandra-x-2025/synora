@@ -776,3 +776,29 @@ Examples:
 - `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
 - 定义草案输出结构（`operation_id`、回滚字段、状态生命周期）
 - 已在接口总规范与路线图启动记录中建立草案引用
+
+---
+
+## 2026-02-22 – Phase 3 Workplan: Module-Level Implementation Breakdown
+
+### English
+
+- Added `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
+- Split implementation tasks by layer:
+- CLI
+- Service
+- Repository
+- Security
+- Integration
+- Defined milestone sequence (M1-M4) and completion criteria
+
+### 中文
+
+- 新增 `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
+- 按层拆分实施任务：
+- CLI
+- Service
+- Repository
+- Security
+- Integration
+- 定义里程碑顺序（M1-M4）与完成标准
