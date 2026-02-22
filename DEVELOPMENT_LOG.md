@@ -1132,3 +1132,23 @@ Examples:
 - 新增：
 - `docs/security/Synora_Real_Mutation_Gate_Final_Signoff_Pack.md`
 - 提供可直接粘贴到 PR/发布说明的 `Approved` / `Rejected` 决策模板
+
+---
+
+## 2026-02-22 – Runtime Capability Boundary Note Added
+
+### English
+
+- Added:
+- `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
+- Explicitly separated:
+- currently available simulation/audit capabilities
+- gated real mutation capabilities
+
+### 中文
+
+- 新增：
+- `docs/security/Synora_Runtime_Capability_Boundary_2026-02-22.md`
+- 明确区分：
+- 当前可用的 simulation/audit 能力
+- 仍受门禁控制的真实变更能力
