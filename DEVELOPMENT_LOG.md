@@ -1184,3 +1184,21 @@ Examples:
 
 - 更新 `docs/Push_Workflow_Standard.md`
 - 增加 docs-only 快速流程，文档提交可跳过不必要的 cargo 检查
+
+---
+
+## 2026-02-22 – Push Workflow Assistant Templates Added
+
+### English
+
+- Extended `docs/Push_Workflow_Standard.md` with:
+- assistant mode selection rule (`code` vs `docs-only`)
+- fixed output templates for both push modes
+- Standardized future assistant push responses with deterministic structure
+
+### 中文
+
+- 扩展 `docs/Push_Workflow_Standard.md`：
+- 新增助手模式选择规则（`code` 与 `docs-only`）
+- 新增两类固定输出模板
+- 统一后续助手推送输出结构，减少临时判断

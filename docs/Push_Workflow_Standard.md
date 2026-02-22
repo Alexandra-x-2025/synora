@@ -91,6 +91,48 @@ For every requested push, assistant should provide:
 5. Exact `git push` command
 6. Branch note if branch is not `main`
 
+Assistant mode selection rule:
+
+- If staged scope includes code/config/test files, use `Code change push` template.
+- If staged scope is docs-only, use `Docs-only push` template.
+- When in doubt, default to `Code change push`.
+
+### Code change push template
+
+Use this output order:
+
+1. `git status --short` summary
+2. Verification checklist:
+- `cargo check`
+- `cargo test`
+3. Recommended commit message
+4. Exact commands:
+
+```powershell
+git add <explicit-file-list>
+git commit -m "<type>(<scope>): <summary>"
+git push origin <branch>
+```
+
+### Docs-only push template
+
+Use this output order:
+
+1. `git status --short` summary
+2. Docs-only scope proof:
+- `git diff --name-only --cached`
+3. Recommended commit message (`docs` or `chore`)
+4. Exact commands:
+
+```powershell
+git add <explicit-file-list>
+git commit -m "<type>(<scope>): <summary>"
+git push origin <branch>
+```
+
+Note:
+- Do not require `cargo check` / `cargo test` in docs-only template.
+
 ## 6. Safety Rules
 
 - Never use destructive git commands (`reset --hard`, checkout discard) unless explicitly requested.
