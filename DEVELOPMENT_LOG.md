@@ -870,3 +870,29 @@ Examples:
 - 设置 `mutation_boundary_reached = true`
 - 保持安全策略：
 - 运行时仍不做真实文件/注册表变更
+
+---
+
+## 2026-02-22 – Phase 3 M4: Failure and Rollback Simulation Path
+
+### English
+
+- Added simulation flags for confirmed cleanup flow:
+- `--simulate-failure`
+- `--simulate-rollback-failure`
+- Added audit persistence for failure lifecycle:
+- `quarantine_failed`
+- `quarantine_rollback_success`
+- `quarantine_rollback_failed`
+- Failed cleanup operations now map to exit code `4` while still emitting machine-readable output
+
+### 中文
+
+- 为 confirmed cleanup 流程增加模拟参数：
+- `--simulate-failure`
+- `--simulate-rollback-failure`
+- 增加失败生命周期审计持久化：
+- `quarantine_failed`
+- `quarantine_rollback_success`
+- `quarantine_rollback_failed`
+- 失败操作映射为退出码 `4`，同时保持可机读输出

@@ -129,6 +129,8 @@ Kickoff update:
 - confirmed precheck path persists `quarantine_confirmed` and safety evidence placeholders (`registry_backup` / `quarantine`) without crossing mutation boundary
 - M3 implementation started:
 - confirmed path now records simulated execution success (`quarantine_success`) and marks mutation boundary reached
+- M4 implementation started:
+- simulated failure + rollback status persistence (`quarantine_failed`, `quarantine_rollback_success|failed`) and exit `4` mapping for failed operations
 
 ---
 
@@ -157,3 +159,5 @@ Kickoff update:
 - confirmed precheck 路径写入 `quarantine_confirmed` 与安全证据占位（`registry_backup` / `quarantine`），但不跨越变更边界
 - 已启动 M3 实现：
 - confirmed 路径记录模拟执行成功（`quarantine_success`），并标记已到达变更边界
+- 已启动 M4 实现：
+- 模拟失败与回滚状态持久化（`quarantine_failed`、`quarantine_rollback_success|failed`），并将失败操作映射为退出码 `4`

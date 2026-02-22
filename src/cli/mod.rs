@@ -213,6 +213,8 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
     let mut confirmed = false;
     let mut as_json = false;
     let mut verbose = false;
+    let mut simulate_failure = false;
+    let mut simulate_rollback_failure = false;
 
     let mut idx = 1usize;
     while idx < args.len() {
@@ -249,6 +251,14 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
                 verbose = true;
                 idx += 1;
             }
+            "--simulate-failure" => {
+                simulate_failure = true;
+                idx += 1;
+            }
+            "--simulate-rollback-failure" => {
+                simulate_rollback_failure = true;
+                idx += 1;
+            }
             _ => {
                 eprintln!("Validation error: unknown option '{}'", args[idx]);
                 return Ok(EXIT_USAGE);
@@ -260,6 +270,14 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
         eprintln!("Validation error: --id is required");
         return Ok(EXIT_USAGE);
     };
+    if (simulate_failure || simulate_rollback_failure) && !confirmed {
+        eprintln!("Validation error: simulation flags require --confirm");
+        return Ok(EXIT_USAGE);
+    }
+    if simulate_rollback_failure && !simulate_failure {
+        eprintln!("Validation error: --simulate-rollback-failure requires --simulate-failure");
+        return Ok(EXIT_USAGE);
+    }
 
     let service = CleanupService::default();
     let plan = match service.plan_quarantine(&package_id, confirmed, dry_run) {
@@ -269,13 +287,14 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
             return Ok(EXIT_USAGE);
         }
     };
-    let (plan, written) = match service.execute_cleanup_plan(plan) {
-        Ok(result) => result,
-        Err(err) => {
-            eprintln!("Integration failure: failed to persist cleanup plan: {err}");
-            return Ok(EXIT_INTEGRATION);
-        }
-    };
+    let (plan, written) =
+        match service.execute_cleanup_plan(plan, simulate_failure, simulate_rollback_failure) {
+            Ok(result) => result,
+            Err(err) => {
+                eprintln!("Integration failure: failed to persist cleanup plan: {err}");
+                return Ok(EXIT_INTEGRATION);
+            }
+        };
 
     if as_json {
         println!(
@@ -305,7 +324,11 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
         }
     }
 
-    Ok(EXIT_OK)
+    if plan.status == "quarantine_failed" {
+        Ok(EXIT_INTEGRATION)
+    } else {
+        Ok(EXIT_OK)
+    }
 }
 
 fn handle_config(args: &[String]) -> Result<i32, String> {
@@ -571,7 +594,7 @@ fn print_update_help() {
 
 fn print_cleanup_help() {
     println!(
-        "Usage: synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]"
+        "Usage: synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose] [--simulate-failure] [--simulate-rollback-failure]"
     );
 }
 
@@ -864,6 +887,48 @@ mod tests {
         ]))
         .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn cleanup_quarantine_simulation_requires_confirm() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--simulate-failure",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn cleanup_quarantine_rollback_simulation_requires_failure_flag() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--confirm",
+            "--simulate-rollback-failure",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn cleanup_quarantine_confirm_simulated_failure_returns_integration() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--confirm",
+            "--simulate-failure",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_INTEGRATION);
     }
 
     #[test]

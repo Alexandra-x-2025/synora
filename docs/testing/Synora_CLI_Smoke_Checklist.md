@@ -23,6 +23,7 @@ Quick regression checks for CLI contract and integration behavior.
 13. `cargo run -- source suggest --json`
 14. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
 15. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
+16. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
 
 ## Expected Outcomes
 
@@ -41,3 +42,4 @@ Quick regression checks for CLI contract and integration behavior.
 13. Returns JSON array of source recommendations (can be empty).
 14. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
 15. Returns JSON object for cleanup confirm simulated execution with `status: "quarantine_success"` and `mutation_boundary_reached: true`.
+16. Returns JSON payload with failure statuses and exits with code `4`; history should include rollback status row.

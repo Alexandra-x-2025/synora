@@ -3,7 +3,7 @@
 # Synora -- Cleanup Quarantine CLI 契约（草案 v0.2）
 
 Date: 2026-02-22
-Status: Draft (Phase 3, M1-M3 simulated execution path implemented)
+Status: Draft (Phase 3, M1-M4 rollback simulation path implemented)
 Compatibility: Does not modify frozen `v0.1` contract
 
 ---
@@ -14,6 +14,9 @@ Executable: `synora`
 
 Command:
 - `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- testing-only simulation flags:
+- `--simulate-failure`
+- `--simulate-rollback-failure`
 
 Rules:
 - `--id` is required.
@@ -21,6 +24,8 @@ Rules:
 - `--dry-run` and `--confirm` are mutually exclusive.
 - `--json` enables machine-readable output.
 - `--verbose` is text-mode diagnostic output; ignored in JSON mode.
+- Simulation flags require `--confirm`.
+- `--simulate-rollback-failure` requires `--simulate-failure`.
 
 ---
 
@@ -80,6 +85,7 @@ Code mapping:
 Failure semantics:
 - If failure happens before mutation boundary, rollback is `not_needed`.
 - If failure happens after mutation boundary, rollback attempt is mandatory and reported.
+- Simulated failure path currently returns exit code `4` with machine-readable payload.
 
 ---
 

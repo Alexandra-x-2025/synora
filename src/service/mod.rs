@@ -186,6 +186,8 @@ impl CleanupService {
     pub fn execute_cleanup_plan(
         &self,
         mut plan: CleanupPlan,
+        simulate_failure: bool,
+        simulate_rollback_failure: bool,
     ) -> Result<(CleanupPlan, usize), crate::repository::RepositoryError> {
         let software_id = self.repo.upsert_software(
             &plan.package_id,
@@ -220,11 +222,42 @@ impl CleanupService {
             written += 2;
 
             plan.mutation_boundary_reached = true;
-            plan.status = "quarantine_success".to_string();
-            plan.message = "phase3 m3: simulated mutation succeeded".to_string();
-            self.repo
-                .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
-            written += 1;
+            if simulate_failure {
+                plan.status = "quarantine_failed".to_string();
+                plan.message = "phase3 m4: simulated mutation failed".to_string();
+                self.repo
+                    .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
+                written += 1;
+
+                plan.rollback_attempted = true;
+                if simulate_rollback_failure {
+                    plan.rollback_status = "failed".to_string();
+                    self.repo.log_update(
+                        software_id,
+                        "unknown",
+                        "unknown",
+                        timestamp,
+                        "quarantine_rollback_failed",
+                    )?;
+                    written += 1;
+                } else {
+                    plan.rollback_status = "success".to_string();
+                    self.repo.log_update(
+                        software_id,
+                        "unknown",
+                        "unknown",
+                        timestamp,
+                        "quarantine_rollback_success",
+                    )?;
+                    written += 1;
+                }
+            } else {
+                plan.status = "quarantine_success".to_string();
+                plan.message = "phase3 m3: simulated mutation succeeded".to_string();
+                self.repo
+                    .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
+                written += 1;
+            }
         }
 
         Ok((plan, written))
@@ -435,7 +468,7 @@ mod tests {
             .plan_quarantine("Git.Git", false, true)
             .expect("plan_quarantine should succeed");
         let (result, written) = service
-            .execute_cleanup_plan(plan)
+            .execute_cleanup_plan(plan, false, false)
             .expect("execute_cleanup_plan should succeed");
         assert_eq!(written, 1);
         assert!(!result.mutation_boundary_reached);
@@ -468,7 +501,7 @@ mod tests {
             .plan_quarantine("Git.Git", true, false)
             .expect("plan_quarantine should succeed");
         let (result, written) = service
-            .execute_cleanup_plan(plan)
+            .execute_cleanup_plan(plan, false, false)
             .expect("execute_cleanup_plan should succeed");
         assert_eq!(written, 4);
         assert!(result.mutation_boundary_reached);
@@ -502,6 +535,74 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM quarantine", [], |row| row.get(0))
             .expect("quarantine count query should succeed");
         assert_eq!(quarantine_count, 1);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn persist_cleanup_confirm_simulated_failure_rolls_back_successfully() {
+        let root = unique_dir("synora-cleanup-failure-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path.clone()),
+            },
+        };
+
+        let plan = service
+            .plan_quarantine("Git.Git", true, false)
+            .expect("plan_quarantine should succeed");
+        let (result, written) = service
+            .execute_cleanup_plan(plan, true, false)
+            .expect("execute_cleanup_plan should succeed");
+        assert_eq!(written, 5);
+        assert_eq!(result.status, "quarantine_failed");
+        assert!(result.rollback_attempted);
+        assert_eq!(result.rollback_status, "success");
+
+        let conn = Connection::open(db_path).expect("db should open");
+        let rollback_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_rollback_success'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("rollback count query should succeed");
+        assert_eq!(rollback_count, 1);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn persist_cleanup_confirm_simulated_rollback_failure_is_logged() {
+        let root = unique_dir("synora-cleanup-rollback-failure-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path.clone()),
+            },
+        };
+
+        let plan = service
+            .plan_quarantine("Git.Git", true, false)
+            .expect("plan_quarantine should succeed");
+        let (result, written) = service
+            .execute_cleanup_plan(plan, true, true)
+            .expect("execute_cleanup_plan should succeed");
+        assert_eq!(written, 5);
+        assert_eq!(result.status, "quarantine_failed");
+        assert!(result.rollback_attempted);
+        assert_eq!(result.rollback_status, "failed");
+
+        let conn = Connection::open(db_path).expect("db should open");
+        let rollback_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_rollback_failed'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("rollback failed count query should succeed");
+        assert_eq!(rollback_count, 1);
 
         let _ = fs::remove_dir_all(root);
     }
