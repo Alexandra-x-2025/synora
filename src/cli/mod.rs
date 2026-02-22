@@ -1,6 +1,6 @@
 use crate::integration::{IntegrationError, ParsePath};
 use crate::logging::log_event;
-use crate::repository::ConfigRepository;
+use crate::repository::{ConfigRepository, DatabaseRepository};
 use crate::security::SecurityError;
 use crate::service::{SoftwareService, UpdateService};
 
@@ -192,8 +192,18 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
     let repo = ConfigRepository::default();
     match repo.init_default() {
         Ok(path) => {
-            println!("Config initialized: {}", path.display());
-            Ok(EXIT_OK)
+            let db_repo = DatabaseRepository::default();
+            match db_repo.init_schema() {
+                Ok(db_path) => {
+                    println!("Config initialized: {}", path.display());
+                    println!("Database initialized: {}", db_path.display());
+                    Ok(EXIT_OK)
+                }
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    Ok(EXIT_INTEGRATION)
+                }
+            }
         }
         Err(err) => {
             eprintln!("Integration failure: {err}");

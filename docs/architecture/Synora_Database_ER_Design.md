@@ -13,7 +13,7 @@ software(id, name, version, source, install_path, risk_level)
 update_history(id, software_id, old_version, new_version, timestamp,
 status)
 
-quarantine(id, file_path, original_location, timestamp, reason)
+quarantine(id, software_id, file_path, original_location, timestamp, reason)
 
 registry_backup(id, hive, key_path, backup_blob, timestamp)
 

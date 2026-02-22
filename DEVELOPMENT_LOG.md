@@ -542,6 +542,44 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-22 – Phase 2 Week 1 Implementation: SQLite Repository Baseline
+
+### English
+
+- Added SQLite dependency (`rusqlite` with bundled runtime)
+- Implemented `DatabaseRepository` in Rust repository layer:
+- Schema bootstrap for core tables:
+- `software`
+- `update_history`
+- `quarantine`
+- `registry_backup`
+- Added repository contract methods:
+- software upsert/list
+- update history logging
+- quarantine logging
+- registry backup logging
+- Updated `config init` to bootstrap both config file and SQLite schema
+- Added repository unit tests for schema init and write/list roundtrip
+
+### 中文
+
+- 新增 SQLite 依赖（`rusqlite`，bundled 运行时）
+- 在 Rust repository 层实现 `DatabaseRepository`：
+- 核心表 schema 初始化：
+- `software`
+- `update_history`
+- `quarantine`
+- `registry_backup`
+- 增加 repository 契约方法：
+- 软件 upsert / 列表查询
+- 更新历史写入
+- 隔离记录写入
+- 注册表备份记录写入
+- `config init` 改为联动初始化配置与 SQLite schema
+- 增加 repository 单元测试（schema 初始化 + 写入/查询回环）
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

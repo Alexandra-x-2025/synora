@@ -66,6 +66,7 @@ Compatibility:
 
 Purpose:
 - Initialize local configuration file.
+- Bootstrap local database schema baseline when missing.
 
 Path rules:
 - Use `SYNORA_HOME` when provided.

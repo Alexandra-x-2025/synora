@@ -20,7 +20,7 @@ tracing + thiserror + anyhow
 
 ## Database / 数据库
 
-SQLite (sqlx preferred)
+SQLite (`rusqlite` current baseline, `sqlx` optional future migration)
 
 ## Windows Integration / Windows 集成
 

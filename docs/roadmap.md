@@ -72,6 +72,10 @@ Status: Planning (started on 2026-02-22)
 - Week 3: Rule-engine scoring and retry policy refinement
 - Week 4: Logging diagnostics + hardening tests + integration review
 
+Week 1 progress update:
+- SQLite repository baseline implemented in Rust (`software`, `update_history`, `quarantine`, `registry_backup`)
+- `config init` now bootstraps config + database schema
+
 ---
 
 ## 阶段 2 – 智能增强
@@ -89,6 +93,10 @@ Status: Planning (started on 2026-02-22)
 - 第 2 周：来源推荐流水线（winget + 元数据启发式）
 - 第 3 周：规则引擎评分与重试策略优化
 - 第 4 周：日志诊断增强 + 加固测试 + 集成评审
+
+第 1 周进展：
+- 已在 Rust 中实现 SQLite repository 基线（`software`、`update_history`、`quarantine`、`registry_backup`）
+- `config init` 已支持配置文件与数据库 schema 的联动初始化
 
 ---
 

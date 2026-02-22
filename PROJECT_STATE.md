@@ -72,26 +72,28 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 
 ## In Progress
 
-- Phase 2 Week 1 planning execution:
-- SQLite schema and repository contract draft
+- Phase 2 Week 1 execution:
+- SQLite schema baseline implementation
+- Repository contract implementation and integration
 - Data model consistency review
 
 ## 进行中
 
-- Phase 2 第 1 周计划执行：
-- SQLite schema 与 repository 契约草案
+- Phase 2 第 1 周执行中：
+- SQLite schema 基线实现
+- Repository 契约实现与接线
 - 数据模型一致性评审
 
 ---
 
 ## Next
 
-- Implement Phase 2 Week 1 deliverables (schema + repository)
+- Finalize Week 1 repository tests and documentation sync
 - Start source suggestion prototype (Week 2)
 - Expand integration and scoring tests
 
 ## 下一步
 
-- 落地 Phase 2 第 1 周交付（schema + repository）
+- 完成第 1 周 repository 测试与文档同步收口
 - 启动来源推荐原型（第 2 周）
 - 扩展集成与评分测试
