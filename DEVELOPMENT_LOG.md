@@ -1116,3 +1116,19 @@ Examples:
 - `docs/security/Synora_Real_Mutation_Gate_Approval_Record_Template.md`
 - `docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md`
 - 已在策略草案中关联审批工件，便于直接用于 PR/发布审批
+
+---
+
+## 2026-02-22 – Real Mutation Gate Final Sign-off Pack Added
+
+### English
+
+- Added:
+- `docs/security/Synora_Real_Mutation_Gate_Final_Signoff_Pack.md`
+- Included copy-ready `Approved` / `Rejected` decision blocks for PR/release notes
+
+### 中文
+
+- 新增：
+- `docs/security/Synora_Real_Mutation_Gate_Final_Signoff_Pack.md`
+- 提供可直接粘贴到 PR/发布说明的 `Approved` / `Rejected` 决策模板
