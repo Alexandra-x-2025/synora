@@ -478,6 +478,28 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-21 – Config and Logging Path Alignment (Rust)
+
+### English
+
+- Added Rust path strategy module: `src/paths/mod.rs`
+- Implemented `SYNORA_HOME`-aware home resolution and fallback behavior
+- Added Rust logging module: `src/logging/mod.rs`
+- CLI startup now initializes log file path (`logs/synora.log`) in resolved Synora home
+- Updated `config init` to use shared path strategy and include `quarantine_dir`
+- Added unit tests for path resolution and repository config initialization
+
+### 中文
+
+- 新增 Rust 路径策略模块：`src/paths/mod.rs`
+- 实现 `SYNORA_HOME` 感知的根目录解析与回退策略
+- 新增 Rust 日志模块：`src/logging/mod.rs`
+- CLI 启动时初始化日志路径（解析后的 Synora 根目录下 `logs/synora.log`）
+- `config init` 改为使用统一路径策略，并写入 `quarantine_dir`
+- 增加路径解析与配置初始化单元测试
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

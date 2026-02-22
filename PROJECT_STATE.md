@@ -30,6 +30,7 @@ Phase 1 – CLI MVP (In Progress)
 - Database schema implementation: Pending
 - Rust project bootstrap: Started
 - Python prototype archive: Completed (`legacy/python/`)
+- Rust config/logging path alignment: Completed (`SYNORA_HOME` aware)
 
 ---
 
@@ -43,6 +44,7 @@ Phase 1 – CLI MVP (In Progress)
 - 数据库 Schema 实现：待开始
 - Rust 工程初始化：已开始
 - Python 原型归档：已完成（`legacy/python/`）
+- Rust 配置与日志路径对齐：已完成（支持 `SYNORA_HOME`）
 
 ---
 

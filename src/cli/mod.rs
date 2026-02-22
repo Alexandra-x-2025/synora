@@ -1,4 +1,5 @@
 use crate::integration::{IntegrationError, ParsePath};
+use crate::logging::log_event;
 use crate::repository::ConfigRepository;
 use crate::security::SecurityError;
 use crate::service::{SoftwareService, UpdateService};
@@ -10,6 +11,10 @@ pub const EXIT_INTEGRATION: i32 = 4;
 pub const EXIT_INTERNAL: i32 = 10;
 
 pub fn run() -> i32 {
+    if let Err(err) = log_event("INFO", "cli_start") {
+        eprintln!("Logging unavailable: {err}");
+    }
+
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
         print_help();

@@ -16,6 +16,7 @@ Quick regression checks for CLI contract and integration behavior.
 6. `cargo run -- update check --verbose`
 7. `cargo run -- update apply --id Git.Git --yes --json`
 8. `cargo run -- update apply --id Git.Git --dry-run --confirm`
+9. `cargo run -- config init`
 
 ## Expected Outcomes
 
@@ -27,3 +28,4 @@ Quick regression checks for CLI contract and integration behavior.
 6. Text output plus `has_updates: true|false` and `parse_path: ...`.
 7. JSON object output with `requested_mode: "confirm"`.
 8. Fails with usage validation and exit code `2`.
+9. Prints config path under `.synora` (or under `SYNORA_HOME` if set).

@@ -86,6 +86,8 @@ Exit codes:
 
 Purpose:
 - Create initial config file in user profile.
+- Uses `SYNORA_HOME` when provided.
+- Default root is user home `.synora`; fallback is current working directory `.synora` when home path is unavailable.
 
 Exit codes:
 - `0`: success

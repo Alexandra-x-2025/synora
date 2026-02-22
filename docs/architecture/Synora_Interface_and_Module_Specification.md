@@ -67,6 +67,11 @@ Compatibility:
 Purpose:
 - Initialize local configuration file.
 
+Path rules:
+- Use `SYNORA_HOME` when provided.
+- Default root is user home `.synora`.
+- Fallback to working directory `.synora` if home root is unavailable.
+
 ---
 
 ## 2. Error Code Contract / 错误码契约
