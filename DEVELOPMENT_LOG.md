@@ -1004,3 +1004,21 @@ Examples:
 - 新增 `docs/security/Synora_Security_Signoff_Checklist.md`
 - 将门禁阻塞项关联到该签署清单
 - 在真实变更上线前统一签署证据收集格式
+
+---
+
+## 2026-02-22 – Phase 3 Security Sign-off Pre-Filled Draft
+
+### English
+
+- Added pre-filled review draft:
+- `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
+- Marked evidence-backed items as checked
+- Kept approval and signer fields pending for formal security decision
+
+### 中文
+
+- 新增预填评审草案：
+- `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
+- 已将有证据支撑的条目标记为完成
+- 审批与签字字段保留待正式安全决策填写

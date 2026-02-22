@@ -4,6 +4,9 @@ Date baseline: 2026-02-22
 Status: Pending Sign-off
 Scope: Required before real cleanup mutation go-live
 
+Reference draft:
+- `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
+
 ## 1. Review Scope Confirmation
 
 - [ ] Scope confirmed: this sign-off covers real cleanup mutation path only

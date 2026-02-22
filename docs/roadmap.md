@@ -144,6 +144,8 @@ Kickoff update:
 - quarantine simulation gate is now ready for security sign-off
 - Sign-off artifact added:
 - `docs/security/Synora_Security_Signoff_Checklist.md`
+- Pre-filled draft evidence sheet added:
+- `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
 
 ---
 
@@ -187,3 +189,5 @@ Kickoff update:
 - quarantine 模拟门禁已进入 security 签署准备
 - 已新增签署工件：
 - `docs/security/Synora_Security_Signoff_Checklist.md`
+- 已新增预填证据草案：
+- `docs/security/Synora_Security_Signoff_Checklist_2026-02-22_Draft.md`
