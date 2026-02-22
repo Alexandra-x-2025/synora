@@ -543,32 +543,28 @@ impl DatabaseRepository {
         limit: Option<usize>,
         enabled_only: bool,
         since_ts: Option<i64>,
+        reason_contains: Option<&str>,
     ) -> Result<Vec<GateHistoryRow>, RepositoryError> {
         let db_path = self.init_schema()?;
         let conn = Connection::open(db_path)?;
-
-        let mut sql = String::from(
+        let sql = String::from(
             "SELECT id, timestamp, real_mutation_enabled, gate_version, approval_record_ref, reason
-             FROM gate_history",
+             FROM gate_history
+             WHERE (?1 IS NULL OR timestamp >= ?1)
+               AND (?2 = 0 OR real_mutation_enabled = 1)
+               AND (?3 IS NULL OR instr(lower(reason), lower(?3)) > 0)
+             ORDER BY timestamp DESC, id DESC
+             LIMIT CASE WHEN ?4 IS NULL THEN -1 ELSE ?4 END",
         );
-        let mut predicates: Vec<String> = Vec::new();
-        if enabled_only {
-            predicates.push("real_mutation_enabled = 1".to_string());
-        }
-        if let Some(since) = since_ts {
-            predicates.push(format!("timestamp >= {since}"));
-        }
-        if !predicates.is_empty() {
-            sql.push_str(" WHERE ");
-            sql.push_str(&predicates.join(" AND "));
-        }
-        sql.push_str(" ORDER BY timestamp DESC, id DESC");
-        if let Some(v) = limit {
-            sql.push_str(&format!(" LIMIT {v}"));
-        }
-
         let mut stmt = conn.prepare(&sql)?;
-        let rows = stmt.query_map([], |row| {
+        let enabled_flag: i64 = if enabled_only { 1 } else { 0 };
+        let limit_i64 = limit.map(|v| match i64::try_from(v) {
+            Ok(n) => n,
+            Err(_) => i64::MAX,
+        });
+        let rows = stmt.query_map(
+            params![since_ts, enabled_flag, reason_contains, limit_i64],
+            |row| {
             let enabled: i64 = row.get(2)?;
             Ok(GateHistoryRow {
                 id: row.get(0)?,
@@ -578,7 +574,8 @@ impl DatabaseRepository {
                 approval_record_ref: row.get(4)?,
                 reason: row.get(5)?,
             })
-        })?;
+        },
+        )?;
 
         let mut items = Vec::new();
         for row in rows {
@@ -730,7 +727,7 @@ mod tests {
             .expect("gate log should succeed");
 
         let rows = repo
-            .list_gate_history_filtered(None, false, None)
+            .list_gate_history_filtered(None, false, None, None)
             .expect("gate history should read");
         assert_eq!(rows.len(), 2);
         assert!(!rows[0].real_mutation_enabled);
@@ -738,21 +735,28 @@ mod tests {
         assert_eq!(rows[0].reason, "disable after pilot");
 
         let enabled_rows = repo
-            .list_gate_history_filtered(None, true, None)
+            .list_gate_history_filtered(None, true, None, None)
             .expect("enabled-only gate history should read");
         assert_eq!(enabled_rows.len(), 1);
         assert!(enabled_rows[0].real_mutation_enabled);
 
         let limited_rows = repo
-            .list_gate_history_filtered(Some(1), false, None)
+            .list_gate_history_filtered(Some(1), false, None, None)
             .expect("limited gate history should read");
         assert_eq!(limited_rows.len(), 1);
 
         let since_rows = repo
-            .list_gate_history_filtered(None, false, Some(1_700_123_457))
+            .list_gate_history_filtered(None, false, Some(1_700_123_457), None)
             .expect("since-filtered gate history should read");
         assert_eq!(since_rows.len(), 1);
         assert_eq!(since_rows[0].reason, "disable after pilot");
+
+        let reason_rows = repo
+            .list_gate_history_filtered(None, false, None, Some("pilot"))
+            .expect("reason-filtered gate history should read");
+        assert_eq!(reason_rows.len(), 2);
+        assert!(reason_rows.iter().any(|r| r.reason == "enable for pilot"));
+        assert!(reason_rows.iter().any(|r| r.reason == "disable after pilot"));
 
         let _ = fs::remove_dir_all(root);
     }
