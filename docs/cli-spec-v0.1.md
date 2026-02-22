@@ -73,6 +73,9 @@ Behavior:
 - `--confirm` marks explicit user confirmation for high-risk path.
 - Legacy `--yes` is accepted as alias of `--confirm`.
 - v0.1 does not perform real installer execution yet.
+- Each successful plan is persisted into SQLite `update_history` as audit record:
+- `planned_dry_run` when unconfirmed
+- `planned_confirmed` when `--confirm`/`--yes` is used
 
 JSON contract (minimum keys):
 - `package_id`

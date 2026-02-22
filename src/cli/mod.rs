@@ -127,7 +127,9 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
                     }
                     "--dry-run" => {
                         if confirmed {
-                            eprintln!("Validation error: --dry-run cannot be used with --confirm/--yes");
+                            eprintln!(
+                                "Validation error: --dry-run cannot be used with --confirm/--yes"
+                            );
                             return Ok(EXIT_USAGE);
                         }
                         dry_run = true;
@@ -135,7 +137,9 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
                     }
                     "--confirm" | "--yes" => {
                         if dry_run {
-                            eprintln!("Validation error: --confirm/--yes cannot be used with --dry-run");
+                            eprintln!(
+                                "Validation error: --confirm/--yes cannot be used with --dry-run"
+                            );
                             return Ok(EXIT_USAGE);
                         }
                         confirmed = true;
@@ -157,7 +161,7 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
                 return Ok(EXIT_USAGE);
             };
 
-            let updater = UpdateService;
+            let updater = UpdateService::default();
             let plan = match updater.plan_apply(&package_id, confirmed, dry_run) {
                 Ok(plan) => plan,
                 Err(msg) => {
@@ -165,6 +169,10 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
                     return Ok(EXIT_USAGE);
                 }
             };
+            if let Err(err) = updater.persist_planned_update(&plan) {
+                eprintln!("Integration failure: failed to persist update plan: {err}");
+                return Ok(EXIT_INTEGRATION);
+            }
 
             if as_json {
                 println!(
@@ -513,7 +521,9 @@ fn print_source_suggestions_verbose_summary(items: &[crate::domain::SourceRecomm
 
 #[cfg(test)]
 mod tests {
-    use super::{dispatch, map_integration_error, EXIT_INTEGRATION, EXIT_OK, EXIT_SECURITY, EXIT_USAGE};
+    use super::{
+        dispatch, map_integration_error, EXIT_INTEGRATION, EXIT_OK, EXIT_SECURITY, EXIT_USAGE,
+    };
     use crate::integration::IntegrationError;
     use crate::security::SecurityError;
 
@@ -529,15 +539,24 @@ mod tests {
 
     #[test]
     fn update_apply_conflicting_flags_returns_usage() {
-        let code = dispatch(&args(&["update", "apply", "--id", "Git.Git", "--dry-run", "--confirm"]))
-            .expect("dispatch should return exit code");
+        let code = dispatch(&args(&[
+            "update",
+            "apply",
+            "--id",
+            "Git.Git",
+            "--dry-run",
+            "--confirm",
+        ]))
+        .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]
     fn update_apply_yes_alias_returns_ok() {
-        let code = dispatch(&args(&["update", "apply", "--id", "Git.Git", "--yes", "--json"]))
-            .expect("dispatch should return exit code");
+        let code = dispatch(&args(&[
+            "update", "apply", "--id", "Git.Git", "--yes", "--json",
+        ]))
+        .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 
@@ -584,9 +603,9 @@ mod tests {
 
     #[test]
     fn map_security_failure_to_exit_3() {
-        let code = map_integration_error(IntegrationError::Security(SecurityError::ProgramNotAllowlisted(
-            "powershell".to_string(),
-        )));
+        let code = map_integration_error(IntegrationError::Security(
+            SecurityError::ProgramNotAllowlisted("powershell".to_string()),
+        ));
         assert_eq!(code, EXIT_SECURITY);
     }
 }

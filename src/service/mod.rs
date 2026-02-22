@@ -3,6 +3,7 @@ use crate::integration::{IntegrationError, ParsePath, WingetClient};
 use crate::repository::DatabaseRepository;
 use crate::security::SecurityGuard;
 use std::collections::HashSet;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Default, Clone, Copy)]
 pub struct SoftwareService {
@@ -27,13 +28,7 @@ impl SoftwareService {
         let mut synced = 0usize;
 
         for item in items {
-            repo.upsert_software(
-                &item.name,
-                &item.version,
-                &item.source,
-                "",
-                "unknown",
-            )?;
+            repo.upsert_software(&item.name, &item.version, &item.source, "", "unknown")?;
             synced += 1;
         }
 
@@ -41,10 +36,18 @@ impl SoftwareService {
     }
 }
 
-pub struct UpdateService;
+#[derive(Default, Clone)]
+pub struct UpdateService {
+    repo: DatabaseRepository,
+}
 
 impl UpdateService {
-    pub fn plan_apply(&self, package_id: &str, confirmed: bool, dry_run: bool) -> Result<UpdatePlan, String> {
+    pub fn plan_apply(
+        &self,
+        package_id: &str,
+        confirmed: bool,
+        dry_run: bool,
+    ) -> Result<UpdatePlan, String> {
         if package_id.trim().is_empty() {
             return Err("package_id is required".to_string());
         }
@@ -57,7 +60,11 @@ impl UpdateService {
         } else {
             "dry-run"
         };
-        let mode = if confirmed { "confirmed-plan" } else { "plan-only" };
+        let mode = if confirmed {
+            "confirmed-plan"
+        } else {
+            "plan-only"
+        };
         let risk = if confirmed { "low" } else { "medium" };
 
         Ok(UpdatePlan {
@@ -70,6 +77,29 @@ impl UpdateService {
             message: "v0.1 does not execute real updates yet".to_string(),
         })
     }
+
+    pub fn persist_planned_update(
+        &self,
+        plan: &UpdatePlan,
+    ) -> Result<(), crate::repository::RepositoryError> {
+        // v0.1 stores package_id as a synthetic software name under `plan` source.
+        let software_id =
+            self.repo
+                .upsert_software(&plan.package_id, "unknown", "plan", "", "unknown")?;
+        let status = if plan.confirmed {
+            "planned_confirmed"
+        } else {
+            "planned_dry_run"
+        };
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|v| v.as_secs() as i64)
+            .unwrap_or(0);
+
+        self.repo
+            .log_update(software_id, "unknown", "unknown", timestamp, status)?;
+        Ok(())
+    }
 }
 
 #[derive(Default, Clone)]
@@ -79,7 +109,9 @@ pub struct SourceSuggestionService {
 }
 
 impl SourceSuggestionService {
-    pub fn suggest_from_signals(&self) -> Result<Vec<SourceRecommendation>, crate::repository::RepositoryError> {
+    pub fn suggest_from_signals(
+        &self,
+    ) -> Result<Vec<SourceRecommendation>, crate::repository::RepositoryError> {
         let rows = self.repo.list_software()?;
         let update_names = self
             .software
@@ -101,7 +133,11 @@ impl SourceSuggestionService {
     }
 }
 
-fn score_recommendation(name: &str, current_source: &str, has_update_signal: bool) -> SourceRecommendation {
+fn score_recommendation(
+    name: &str,
+    current_source: &str,
+    has_update_signal: bool,
+) -> SourceRecommendation {
     let n = name.to_ascii_lowercase();
     let src = current_source.to_ascii_lowercase();
 
@@ -124,7 +160,10 @@ fn score_recommendation(name: &str, current_source: &str, has_update_signal: boo
 
     if n.contains("python") || n.contains("git") || n.contains("node") {
         let mut score = 86;
-        let mut reasons = vec!["common_dev_tool".to_string(), "winget_metadata_expected".to_string()];
+        let mut reasons = vec![
+            "common_dev_tool".to_string(),
+            "winget_metadata_expected".to_string(),
+        ];
         if has_update_signal {
             score = 91;
             reasons.push("update_detected_prefer_managed_channel".to_string());
@@ -140,7 +179,10 @@ fn score_recommendation(name: &str, current_source: &str, has_update_signal: boo
 
     if src.is_empty() || src == "unknown" {
         let mut score = 72;
-        let mut reasons = vec!["source_missing".to_string(), "prefer_safe_default".to_string()];
+        let mut reasons = vec![
+            "source_missing".to_string(),
+            "prefer_safe_default".to_string(),
+        ];
         if has_update_signal {
             score = 78;
             reasons.push("update_detected_requires_traceable_source".to_string());
@@ -171,7 +213,19 @@ fn score_recommendation(name: &str, current_source: &str, has_update_signal: boo
 
 #[cfg(test)]
 mod tests {
-    use super::score_recommendation;
+    use super::{score_recommendation, UpdateService};
+    use crate::repository::DatabaseRepository;
+    use rusqlite::Connection;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn unique_dir(prefix: &str) -> std::path::PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        std::env::temp_dir().join(format!("{prefix}-{unique}"))
+    }
 
     #[test]
     fn recommendation_prefers_existing_winget() {
@@ -192,6 +246,39 @@ mod tests {
         let baseline = score_recommendation("Python", "manual", false);
         let boosted = score_recommendation("Python", "manual", true);
         assert!(boosted.score > baseline.score);
-        assert!(boosted.reasons.iter().any(|r| r.contains("update_detected")));
+        assert!(boosted
+            .reasons
+            .iter()
+            .any(|r| r.contains("update_detected")));
+    }
+
+    #[test]
+    fn persist_planned_update_writes_update_history() {
+        let root = unique_dir("synora-update-plan-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = UpdateService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path.clone()),
+            },
+        };
+
+        let plan = service
+            .plan_apply("Git.Git", true, false)
+            .expect("plan_apply should succeed");
+        service
+            .persist_planned_update(&plan)
+            .expect("persist_planned_update should succeed");
+
+        let conn = Connection::open(db_path).expect("db should open");
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'planned_confirmed'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("count query should succeed");
+        assert_eq!(count, 1);
+
+        let _ = fs::remove_dir_all(root);
     }
 }

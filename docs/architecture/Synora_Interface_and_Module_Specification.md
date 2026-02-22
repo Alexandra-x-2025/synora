@@ -55,6 +55,9 @@ Rules:
 - `--confirm` marks explicit user confirmation for high-risk path.
 - v0.1 remains plan-only execution (no real installer run yet).
 - `--json` returns structured plan payload.
+- Each successful plan must persist an audit event in `update_history`:
+- `planned_dry_run` for unconfirmed plans
+- `planned_confirmed` for confirmed plans
 
 JSON minimum fields:
 - `package_id`
@@ -82,10 +85,11 @@ Path rules:
 Purpose:
 - Read-only listing of persisted software entries from SQLite repository.
 
-### 1.6 `synora source suggest [--json]` (Phase 2 Week 2 prototype)
+### 1.6 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
 
 Purpose:
 - Produce source recommendation candidates with score and reasons.
+- Blend persisted snapshot and update-check signal for scoring.
 
 ---
 
