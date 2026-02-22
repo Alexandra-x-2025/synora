@@ -3,8 +3,8 @@
 # Synora -- Quarantine 实执行设计（草案 v0.1）
 
 Date: 2026-02-22
-Status: Draft for Phase 3 Entry
-Scope: Design only, no runtime behavior change in v0.1
+Status: Draft v0.2 (Aligned with Phase 3 M1-M4 simulation implementation)
+Scope: Simulation path implemented; real mutation path remains gated
 
 ---
 
@@ -25,18 +25,51 @@ English:
 ## 2. Non-Goals / 非目标
 
 English:
-- No real file move/delete in current v0.1 runtime.
+- No real file move/delete in current runtime.
 - No privilege escalation implementation in this draft.
 - No GUI workflow in this phase.
 
 中文:
-- 当前 v0.1 运行时不做真实文件移动/删除。
+- 当前运行时不做真实文件移动/删除。
 - 本草案不实现提权逻辑。
 - 本阶段不涉及 GUI 流程。
 
 ---
 
-## 3. Proposed Execution Contract (Future v0.2+) / 建议执行契约（未来 v0.2+）
+## 3. Current Implementation Snapshot (2026-02-22) / 当前实现快照
+
+Implemented in runtime:
+- `cleanup quarantine` command supports `--dry-run` / `--confirm` / `--json` / `--verbose`.
+- Simulation controls are available for testing:
+- `--simulate-failure`
+- `--simulate-rollback-failure`
+- Audit status persistence is active:
+- `quarantine_planned`
+- `quarantine_confirmed`
+- `quarantine_success`
+- `quarantine_failed`
+- `quarantine_rollback_success`
+- `quarantine_rollback_failed`
+- Security controls are active:
+- canonical path validation
+- path traversal blocking
+- symlink escape blocking
+- allowlist root enforcement
+- HIGH/CRITICAL risk confirmation gate
+
+Still gated:
+- Real file mutation
+- Real registry mutation
+- Real rollback mutation
+- Privilege elevation path
+
+Current release position:
+- Simulation path: Go
+- Real mutation path: No-Go (requires security sign-off and release gate switch)
+
+---
+
+## 4. Proposed Execution Contract (Future v0.2+) / 建议执行契约（未来 v0.2+）
 
 Proposed command shape:
 - `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json]`
@@ -54,7 +87,7 @@ Contract:
 
 ---
 
-## 4. State Machine / 状态机
+## 5. State Machine / 状态机
 
 Stages:
 1. `plan_created`
@@ -69,7 +102,7 @@ Mutation boundary:
 
 ---
 
-## 5. Data Persistence Rules / 数据持久化规则
+## 6. Data Persistence Rules / 数据持久化规则
 
 Required records:
 - `update_history`: append operation status transitions.
@@ -99,7 +132,7 @@ Status mapping into existing `update_history.status`:
 
 ---
 
-## 6. Security Boundaries / 安全边界
+## 7. Security Boundaries / 安全边界
 
 Security Guard policy:
 - Allowlist target roots only (for example install roots and configured quarantine root).
@@ -115,7 +148,7 @@ Risk mapping:
 
 ---
 
-## 7. Failure Semantics / 失败语义
+## 8. Failure Semantics / 失败语义
 
 Failure policy:
 - Before mutation boundary: fail-fast, no rollback needed.
@@ -133,7 +166,7 @@ Output requirement:
 
 ---
 
-## 8. Testing Entry Criteria / 测试准入标准
+## 9. Testing Entry Criteria / 测试准入标准
 
 Required before implementation:
 - Unit tests for stage transitions and validation paths.
@@ -147,15 +180,35 @@ Suggested smoke additions:
 
 ---
 
-## 9. Open Decisions / 待决策项
+## 10. Real Mutation Go-Live Criteria / 真实变更上线门禁
+
+Required to switch from simulation to real mutation:
+- Security sign-off checklist approved by required reviewers.
+- Approval record completed and attached to release evidence.
+- Smoke verification passed for:
+- traversal rejection
+- high-risk confirm gate
+- rollback success/failure reporting
+- explicit release gate switch enabled (default remains simulation).
+- rollback path validated in controlled environment.
+
+Recommended release controls:
+- Keep mutation disabled by default in all non-release profiles.
+- Require explicit operator intent plus confirm gate for high/critical risk.
+- Record release gate version in audit metadata.
+
+---
+
+## 11. Open Decisions / 待决策项
 
 - Should quarantine action use package-level lock to prevent concurrent mutation?
 - Should rollback be mandatory-sync or background with durable retry queue?
 - Should `registry_backup.backup_blob` move to structured JSON schema versioning?
+- Should real mutation gate be runtime config, build-time flag, or dual-control policy switch?
 
 ---
 
-## 10. Adoption Plan / 采用计划
+## 12. Adoption Plan / 采用计划
 
 Phase 3 Step 1:
 - Freeze execution contract and status vocabulary.
@@ -168,3 +221,6 @@ Phase 3 Step 3:
 
 Phase 3 Step 4:
 - Add hardening tests and release gate checklist.
+
+Phase 3 Step 5:
+- Complete security sign-off and enable real mutation gate in controlled rollout.

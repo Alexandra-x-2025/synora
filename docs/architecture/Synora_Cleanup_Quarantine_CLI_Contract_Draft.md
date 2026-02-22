@@ -8,6 +8,25 @@ Compatibility: Does not modify frozen `v0.1` contract
 
 ---
 
+## 0. Implementation Status Matrix / 实现状态矩阵
+
+| Capability | Current State | Notes |
+| --- | --- | --- |
+| Dry-run plan persistence | Implemented | writes `quarantine_planned` |
+| Confirmed precheck | Implemented | writes `quarantine_confirmed` + evidence placeholders |
+| Simulated success path | Implemented | writes `quarantine_success` |
+| Simulated failure + rollback states | Implemented | writes `quarantine_failed` + rollback statuses |
+| Path traversal / symlink / allowlist guard | Implemented | security exit code `3` |
+| High/Critical confirmation gate | Implemented | `--risk high|critical` requires `--confirm` |
+| Real file mutation | Not enabled | release-gated |
+| Real registry mutation | Not enabled | release-gated |
+
+Release gate stance:
+- Simulation path is release-ready.
+- Real mutation path remains No-Go until sign-off artifacts are approved.
+
+---
+
 ## 1. Command Shape / 命令形态
 
 Executable: `synora`
@@ -40,7 +59,7 @@ Dry-run path:
 Confirmed path:
 - Requires explicit confirmation via `--confirm`.
 - Must verify safety preconditions before mutation boundary.
-- In M3 current implementation, mutation step is simulated (no real system mutation yet).
+- In current implementation, mutation step is simulated (no real system mutation yet).
 - Must persist lifecycle statuses:
 - `quarantine_confirmed`
 - `quarantine_success` or `quarantine_failed`
@@ -131,3 +150,4 @@ Sequence requirements:
 - Should `operation_id` use UUIDv4 or timestamp+counter strategy?
 - Should confirmed mode require second factor in enterprise policy profile?
 - Should rollback failure trigger dedicated alert channel in later CI/ops integration?
+- Which mechanism will control real mutation enablement (runtime config, build feature, or dual-control approval switch)?

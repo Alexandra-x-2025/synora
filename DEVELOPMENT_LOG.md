@@ -1054,3 +1054,23 @@ Examples:
 - 新增预填审批记录草案：
 - `docs/security/Synora_Security_Signoff_Approval_Record_2026-02-22_Draft.md`
 - 包含当前证据摘要与待签署决策占位字段
+
+---
+
+## 2026-02-22 – Phase 3 Design Book Alignment (M1-M4 Snapshot Synced)
+
+### English
+
+- Updated quarantine execution design to reflect real runtime state:
+- simulation path implemented, real mutation path still release-gated
+- Added explicit go-live criteria for real mutation enablement
+- Added implementation status matrix to cleanup CLI contract draft
+- Synced open decisions with release gate switch strategy
+
+### 中文
+
+- 更新 quarantine 执行设计书，反映当前真实实现状态：
+- 模拟路径已落地，真实变更路径仍处于发布门禁控制
+- 新增真实变更启用的上线准入条件
+- 在 cleanup CLI 契约草案中增加实现状态矩阵
+- 将待决策项同步到发布开关策略
