@@ -57,10 +57,19 @@ fn handle_software(args: &[String]) -> Result<i32, String> {
     let service = SoftwareService::default();
     match service.list_software() {
         Ok((items, parse_path)) => {
+            let synced = match service.sync_software_snapshot(&items) {
+                Ok(count) => count,
+                Err(err) => {
+                    eprintln!("Integration failure: failed to persist software snapshot: {err}");
+                    return Ok(EXIT_INTEGRATION);
+                }
+            };
+
             if as_json {
                 print_software_json(&items);
             } else {
                 print_software_table(&items);
+                println!("db_sync_count: {synced}");
                 if verbose {
                     println!("parse_path: {}", format_parse_path(parse_path));
                 }

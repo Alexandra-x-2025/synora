@@ -24,7 +24,7 @@ Quick regression checks for CLI contract and integration behavior.
 1. Build succeeds.
 2. Tests pass.
 3. JSON array output (`[]` or populated list).
-4. Text output plus `parse_path: ...`.
+4. Text output plus `db_sync_count: <n>` and `parse_path: ...`.
 5. JSON array output (`[]` or populated list) with stable fields.
 6. Text output plus `has_updates: true|false` and `parse_path: ...`.
 7. JSON object output with `requested_mode: "confirm"`.

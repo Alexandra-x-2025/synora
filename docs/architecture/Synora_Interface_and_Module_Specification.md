@@ -15,11 +15,15 @@ Executable: `synora`
 
 Purpose:
 - Enumerate installed software.
+- Persist repository snapshot for discovered software entries.
 
 Output:
 - Default: human-readable table
 - `--json`: machine-readable JSON array
 - `--verbose`: append parser path in text mode
+
+Text summary contract:
+- print `db_sync_count: <n>` after table output
 
 ### 1.2 `synora update check [--json] [--verbose]`
 

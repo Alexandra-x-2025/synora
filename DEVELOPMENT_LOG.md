@@ -596,6 +596,24 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-22 – Phase 2 Week 1 Repository Sync Hook
+
+### English
+
+- `software list` now upserts discovered entries into SQLite `software` table
+- Added text-mode sync summary: `db_sync_count: <n>`
+- Added service-layer snapshot sync helper for repository wiring
+- Updated smoke checklist and interface/CLI specs for sync behavior
+
+### 中文
+
+- `software list` 现在会将发现结果 upsert 到 SQLite `software` 表
+- 新增文本模式同步汇总：`db_sync_count: <n>`
+- 在 service 层增加仓储快照同步辅助方法
+- 已同步更新 smoke 清单与接口/CLI 规范
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

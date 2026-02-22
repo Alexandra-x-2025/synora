@@ -21,10 +21,14 @@ Executable name: `synora`
 
 Purpose:
 - List installed software from supported sources.
+- Persist local software snapshot into SQLite repository.
 
 Options:
 - `--json`: output structured JSON
 - `--verbose`: include parser path details in text mode
+
+Text mode summary:
+- Prints `db_sync_count: <n>` after table output.
 
 Exit codes:
 - `0`: success

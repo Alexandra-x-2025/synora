@@ -1,5 +1,6 @@
 use crate::domain::{SoftwareItem, UpdateItem, UpdatePlan};
 use crate::integration::{IntegrationError, ParsePath, WingetClient};
+use crate::repository::DatabaseRepository;
 use crate::security::SecurityGuard;
 
 #[derive(Default, Clone, Copy)]
@@ -15,6 +16,27 @@ impl SoftwareService {
 
     pub fn check_updates(&self) -> Result<(Vec<UpdateItem>, ParsePath), IntegrationError> {
         self.winget.list_upgrades(&self.guard)
+    }
+
+    pub fn sync_software_snapshot(
+        &self,
+        items: &[SoftwareItem],
+    ) -> Result<usize, crate::repository::RepositoryError> {
+        let repo = DatabaseRepository::default();
+        let mut synced = 0usize;
+
+        for item in items {
+            repo.upsert_software(
+                &item.name,
+                &item.version,
+                &item.source,
+                "",
+                "unknown",
+            )?;
+            synced += 1;
+        }
+
+        Ok(synced)
     }
 }
 
