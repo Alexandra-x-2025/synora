@@ -614,6 +614,36 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-22 – Phase 2 Week 2 Kickoff: Source Suggestion Prototype
+
+### English
+
+- Added prototype command: `synora source suggest [--json]`
+- Implemented initial recommendation scoring in service layer
+- Recommendation output includes:
+- software name
+- current source
+- recommended source
+- score
+- reasons
+- Added unit tests for basic scoring behavior
+- Synced CLI spec, interface spec, and smoke checklist
+
+### 中文
+
+- 新增原型命令：`synora source suggest [--json]`
+- 在 service 层实现首版来源推荐评分逻辑
+- 推荐输出包含：
+- 软件名
+- 当前来源
+- 推荐来源
+- 分数
+- 理由
+- 增加评分逻辑基础单元测试
+- 已同步 CLI 规范、接口规范与 smoke 清单
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.

@@ -82,6 +82,11 @@ Path rules:
 Purpose:
 - Read-only listing of persisted software entries from SQLite repository.
 
+### 1.6 `synora source suggest [--json]` (Phase 2 Week 2 prototype)
+
+Purpose:
+- Produce source recommendation candidates with score and reasons.
+
 ---
 
 ## 2. Error Code Contract / 错误码契约

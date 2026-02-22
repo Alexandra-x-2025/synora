@@ -2,7 +2,7 @@ use crate::integration::{IntegrationError, ParsePath};
 use crate::logging::log_event;
 use crate::repository::{ConfigRepository, DatabaseRepository};
 use crate::security::SecurityError;
-use crate::service::{SoftwareService, UpdateService};
+use crate::service::{SoftwareService, SourceSuggestionService, UpdateService};
 
 pub const EXIT_OK: i32 = 0;
 pub const EXIT_USAGE: i32 = 2;
@@ -35,6 +35,7 @@ fn dispatch(args: &[String]) -> Result<i32, String> {
         "software" => handle_software(&args[1..]),
         "update" => handle_update(&args[1..]),
         "config" => handle_config(&args[1..]),
+        "source" => handle_source(&args[1..]),
         "-h" | "--help" => {
             print_help();
             Ok(EXIT_OK)
@@ -257,6 +258,35 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
     }
 }
 
+fn handle_source(args: &[String]) -> Result<i32, String> {
+    if args.is_empty() || args[0] != "suggest" {
+        print_source_help();
+        return Ok(EXIT_USAGE);
+    }
+
+    let as_json = args.iter().any(|v| v == "--json");
+    if args.len() > 2 || (args.len() == 2 && !as_json) {
+        print_source_help();
+        return Ok(EXIT_USAGE);
+    }
+
+    let service = SourceSuggestionService::default();
+    match service.suggest_from_repository() {
+        Ok(items) => {
+            if as_json {
+                print_source_suggestions_json(&items);
+            } else {
+                print_source_suggestions_table(&items);
+            }
+            Ok(EXIT_OK)
+        }
+        Err(err) => {
+            eprintln!("Integration failure: {err}");
+            Ok(EXIT_INTEGRATION)
+        }
+    }
+}
+
 fn map_integration_error(err: IntegrationError) -> i32 {
     match err {
         IntegrationError::Security(se) => {
@@ -355,7 +385,7 @@ fn print_update_table(items: &[crate::domain::UpdateItem]) {
 
 fn print_help() {
     println!("Synora CLI v0.1");
-    println!("Usage: synora <software|update|config> <subcommand> [options]");
+    println!("Usage: synora <software|update|config|source> <subcommand> [options]");
     println!("Try: synora software list --json");
 }
 
@@ -371,6 +401,10 @@ fn print_update_help() {
 fn print_config_help() {
     println!("Usage: synora config init");
     println!("   or: synora config db-list [--json]");
+}
+
+fn print_source_help() {
+    println!("Usage: synora source suggest [--json]");
 }
 
 fn escape_json(input: &str) -> String {
@@ -407,6 +441,49 @@ fn print_db_software_table(items: &[crate::repository::SoftwareRow]) {
         println!(
             "{}  {}  {}  {}  {}  {}",
             item.id, item.name, item.version, item.source, item.install_path, item.risk_level
+        );
+    }
+}
+
+fn print_source_suggestions_json(items: &[crate::domain::SourceRecommendation]) {
+    println!("[");
+    for (idx, item) in items.iter().enumerate() {
+        let comma = if idx + 1 == items.len() { "" } else { "," };
+        let reasons = item
+            .reasons
+            .iter()
+            .map(|r| format!("\"{}\"", escape_json(r)))
+            .collect::<Vec<String>>()
+            .join(", ");
+        println!(
+            "  {{\"software_name\":\"{}\",\"current_source\":\"{}\",\"recommended_source\":\"{}\",\"score\":{},\"reasons\":[{}]}}{}",
+            escape_json(&item.software_name),
+            escape_json(&item.current_source),
+            escape_json(&item.recommended_source),
+            item.score,
+            reasons,
+            comma
+        );
+    }
+    println!("]");
+}
+
+fn print_source_suggestions_table(items: &[crate::domain::SourceRecommendation]) {
+    if items.is_empty() {
+        println!("No source recommendations.");
+        return;
+    }
+
+    println!("software_name  current_source  recommended_source  score  reasons");
+    println!("-------------  --------------  ------------------  -----  -------");
+    for item in items {
+        println!(
+            "{}  {}  {}  {}  {}",
+            item.software_name,
+            item.current_source,
+            item.recommended_source,
+            item.score,
+            item.reasons.join("|")
         );
     }
 }
@@ -458,6 +535,13 @@ mod tests {
     #[test]
     fn config_db_list_rejects_unknown_flag() {
         let code = dispatch(&args(&["config", "db-list", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn source_suggest_rejects_unknown_flag() {
+        let code = dispatch(&args(&["source", "suggest", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
     }

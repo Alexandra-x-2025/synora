@@ -25,3 +25,12 @@ pub struct UpdatePlan {
     pub risk: String,
     pub message: String,
 }
+
+#[derive(Debug, Clone)]
+pub struct SourceRecommendation {
+    pub software_name: String,
+    pub current_source: String,
+    pub recommended_source: String,
+    pub score: u8,
+    pub reasons: Vec<String>,
+}

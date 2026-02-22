@@ -76,6 +76,8 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - SQLite schema baseline implementation
 - Repository contract implementation and integration
 - Data model consistency review
+- Phase 2 Week 2 prototype:
+- Source suggestion scoring baseline
 
 ## 进行中
 
@@ -83,6 +85,8 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - SQLite schema 基线实现
 - Repository 契约实现与接线
 - 数据模型一致性评审
+- Phase 2 第 2 周原型：
+- 来源推荐评分基线
 
 ---
 
@@ -91,9 +95,11 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - Finalize Week 1 repository tests and documentation sync
 - Start source suggestion prototype (Week 2)
 - Expand integration and scoring tests
+- Expand source recommendation rules and persistence strategy
 
 ## 下一步
 
 - 完成第 1 周 repository 测试与文档同步收口
 - 启动来源推荐原型（第 2 周）
 - 扩展集成与评分测试
+- 扩展来源推荐规则与持久化策略
