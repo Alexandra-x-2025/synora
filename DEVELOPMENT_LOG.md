@@ -1308,3 +1308,39 @@ Examples:
 - 为持久化 `config gate-set` 写入新增 `--reason` 契约。
 - 新增 `config gate-history [--json]`，用于查看门禁变更审计轨迹。
 - 门禁变更记录已持久化至 SQLite `gate_history` 表。
+
+---
+
+## 2026-02-22 – Gate History Filters Added (`--enabled-only`, `--limit`)
+
+### English
+
+- Extended `config gate-history` with:
+- `--enabled-only` to filter for enable-state records only
+- `--limit <n>` to return latest bounded rows (positive integer)
+- Added repository-side filtered query path and CLI validation tests.
+- Updated CLI spec, interface spec, README, and smoke checklist to match.
+
+### 中文
+
+- 扩展 `config gate-history`：
+- `--enabled-only` 仅查看启用状态记录
+- `--limit <n>` 限定返回最新 N 条（正整数）
+- 增加 repository 侧过滤查询与 CLI 参数校验测试。
+- 已同步更新 CLI 规格、接口规范、README 与冒烟清单。
+
+---
+
+## 2026-02-22 – Gate History Time Filter Added (`--since`)
+
+### English
+
+- Added `--since <unix_ts>` to `config gate-history`.
+- Supports combined filtering with `--enabled-only` and `--limit`.
+- Added CLI validation tests for missing/invalid `--since` and combined success path.
+
+### 中文
+
+- 为 `config gate-history` 新增 `--since <unix_ts>`。
+- 支持与 `--enabled-only`、`--limit` 组合过滤。
+- 补充 CLI 参数校验测试（缺值/非法值）及组合成功路径测试。

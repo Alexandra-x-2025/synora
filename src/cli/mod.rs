@@ -513,6 +513,7 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
             let mut as_json = false;
             let mut enabled_only = false;
             let mut limit: Option<usize> = None;
+            let mut since_ts: Option<i64> = None;
 
             let mut idx = 1usize;
             while idx < args.len() {
@@ -540,6 +541,23 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                         limit = Some(parsed);
                         idx += 2;
                     }
+                    "--since" => {
+                        if idx + 1 >= args.len() {
+                            eprintln!("Validation error: --since requires a value");
+                            return Ok(EXIT_USAGE);
+                        }
+                        let parsed = match args[idx + 1].parse::<i64>() {
+                            Ok(v) if v >= 0 => v,
+                            _ => {
+                                eprintln!(
+                                    "Validation error: --since must be a non-negative unix timestamp"
+                                );
+                                return Ok(EXIT_USAGE);
+                            }
+                        };
+                        since_ts = Some(parsed);
+                        idx += 2;
+                    }
                     _ => {
                         print_config_help();
                         return Ok(EXIT_USAGE);
@@ -548,7 +566,7 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
             }
 
             let repo = DatabaseRepository::default();
-            match repo.list_gate_history_filtered(limit, enabled_only) {
+            match repo.list_gate_history_filtered(limit, enabled_only, since_ts) {
                 Ok(rows) => {
                     if as_json {
                         print_gate_history_json(&rows);
@@ -932,7 +950,9 @@ fn print_config_help() {
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
     println!("   or: synora config gate-show [--json] [--verbose]");
-    println!("   or: synora config gate-history [--json] [--enabled-only] [--limit <n>]");
+    println!(
+        "   or: synora config gate-history [--json] [--enabled-only] [--limit <n>] [--since <unix_ts>]"
+    );
     println!(
         "   or: synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]"
     );
@@ -1340,6 +1360,20 @@ mod tests {
     }
 
     #[test]
+    fn config_gate_history_since_missing_value_returns_usage() {
+        let code = dispatch(&args(&["config", "gate-history", "--since"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_history_since_invalid_returns_usage() {
+        let code = dispatch(&args(&["config", "gate-history", "--since", "-1"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
     fn config_gate_history_json_returns_ok() {
         let code = dispatch(&args(&["config", "gate-history", "--json"]))
             .expect("dispatch should return exit code");
@@ -1357,6 +1391,22 @@ mod tests {
     fn config_gate_history_limit_returns_ok() {
         let code = dispatch(&args(&["config", "gate-history", "--limit", "10", "--json"]))
             .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_gate_history_since_returns_ok() {
+        let code = dispatch(&args(&[
+            "config",
+            "gate-history",
+            "--enabled-only",
+            "--since",
+            "0",
+            "--limit",
+            "5",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
     }
 

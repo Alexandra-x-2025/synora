@@ -150,10 +150,16 @@ Notes:
 - Read-only utility for gate diagnostics.
 - Does not modify system state.
 
-### 2.9 `synora config gate-history [--json]` (Phase 3 Gate Audit Utility)
+### 2.9 `synora config gate-history [--json] [--enabled-only] [--limit <n>] [--since <unix_ts>]` (Phase 3 Gate Audit Utility)
 
 Purpose:
 - Read-only listing of gate change audit records.
+
+Options:
+- `--json`: output structured JSON
+- `--enabled-only`: only show rows with `real_mutation_enabled=true`
+- `--limit <n>`: return only latest `n` rows (`n` must be positive integer)
+- `--since <unix_ts>`: return rows with `timestamp >= unix_ts` (`unix_ts` must be non-negative)
 
 ### 2.10 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]` (Phase 3 Gate Control Utility)
 

@@ -25,11 +25,13 @@ Quick regression checks for CLI contract and integration behavior.
 15. `cargo run -- config gate-set --enable --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --dry-run --json`
 16. `cargo run -- config gate-set --enable --confirm --approval-record docs/security/Synora_Real_Mutation_Gate_Approval_Record_2026-02-22_Draft.md --reason "pilot enable" --json`
 17. `cargo run -- config gate-history --json`
-18. `cargo run -- config gate-show --json`
-19. `cargo run -- source suggest --json`
-20. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
-21. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
-22. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
+18. `cargo run -- config gate-history --enabled-only --limit 5 --json`
+19. `cargo run -- config gate-history --enabled-only --since 0 --limit 5 --json`
+20. `cargo run -- config gate-show --json`
+21. `cargo run -- source suggest --json`
+22. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
+23. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
+24. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
 
 ## Expected Outcomes
 
@@ -50,8 +52,10 @@ Quick regression checks for CLI contract and integration behavior.
 15. Returns dry-run JSON preview with `dry_run: true` and no persisted gate change.
 16. Returns JSON with `real_mutation_enabled: true`, `approval_record_present: true`, and `dry_run: false`.
 17. Returns JSON array with gate audit records; latest row should include `reason: "pilot enable"`.
-18. Returns updated gate JSON snapshot.
-19. Returns JSON array of source recommendations (can be empty).
-20. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
-21. Returns JSON object for confirm path after gate enablement.
-22. Returns failure JSON payload with integration exit `4` when simulated failure is requested.
+18. Returns JSON array filtered to `real_mutation_enabled=true`, limited to latest 5 rows.
+19. Returns JSON array filtered by enable-state and lower timestamp bound.
+20. Returns updated gate JSON snapshot.
+21. Returns JSON array of source recommendations (can be empty).
+22. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
+23. Returns JSON object for confirm path after gate enablement.
+24. Returns failure JSON payload with integration exit `4` when simulated failure is requested.

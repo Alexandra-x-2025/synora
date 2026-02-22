@@ -121,7 +121,7 @@ CLI spec: `docs/cli-spec-v0.1.md`
 `synora update apply --id <package_id> [--dry-run | --confirm] [--json]`  
 `synora config init`  
 `synora config gate-show [--json] [--verbose]`  
-`synora config gate-history [--json]`  
+`synora config gate-history [--json] [--enabled-only] [--limit <n>] [--since <unix_ts>]`  
 `synora config gate-set (--enable|--disable) [--confirm] [--approval-record <ref>] [--gate-version <version>] [--reason <text>] [--keep-record] [--dry-run] [--json]`
 
 Compatibility: `--yes` is still accepted as an alias of `--confirm`.
@@ -144,6 +144,12 @@ Disable gate and keep approval reference:
 
 Show gate change history:
 - `cargo run -- config gate-history --json`
+
+Show last 5 enable events only:
+- `cargo run -- config gate-history --enabled-only --limit 5 --json`
+
+Show enable events since a timestamp:
+- `cargo run -- config gate-history --enabled-only --since 1771730000 --json`
 
 ---
 

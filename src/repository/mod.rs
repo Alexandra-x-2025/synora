@@ -542,6 +542,7 @@ impl DatabaseRepository {
         &self,
         limit: Option<usize>,
         enabled_only: bool,
+        since_ts: Option<i64>,
     ) -> Result<Vec<GateHistoryRow>, RepositoryError> {
         let db_path = self.init_schema()?;
         let conn = Connection::open(db_path)?;
@@ -550,8 +551,16 @@ impl DatabaseRepository {
             "SELECT id, timestamp, real_mutation_enabled, gate_version, approval_record_ref, reason
              FROM gate_history",
         );
+        let mut predicates: Vec<String> = Vec::new();
         if enabled_only {
-            sql.push_str(" WHERE real_mutation_enabled = 1");
+            predicates.push("real_mutation_enabled = 1".to_string());
+        }
+        if let Some(since) = since_ts {
+            predicates.push(format!("timestamp >= {since}"));
+        }
+        if !predicates.is_empty() {
+            sql.push_str(" WHERE ");
+            sql.push_str(&predicates.join(" AND "));
         }
         sql.push_str(" ORDER BY timestamp DESC, id DESC");
         if let Some(v) = limit {
@@ -721,7 +730,7 @@ mod tests {
             .expect("gate log should succeed");
 
         let rows = repo
-            .list_gate_history_filtered(None, false)
+            .list_gate_history_filtered(None, false, None)
             .expect("gate history should read");
         assert_eq!(rows.len(), 2);
         assert!(!rows[0].real_mutation_enabled);
@@ -729,15 +738,21 @@ mod tests {
         assert_eq!(rows[0].reason, "disable after pilot");
 
         let enabled_rows = repo
-            .list_gate_history_filtered(None, true)
+            .list_gate_history_filtered(None, true, None)
             .expect("enabled-only gate history should read");
         assert_eq!(enabled_rows.len(), 1);
         assert!(enabled_rows[0].real_mutation_enabled);
 
         let limited_rows = repo
-            .list_gate_history_filtered(Some(1), false)
+            .list_gate_history_filtered(Some(1), false, None)
             .expect("limited gate history should read");
         assert_eq!(limited_rows.len(), 1);
+
+        let since_rows = repo
+            .list_gate_history_filtered(None, false, Some(1_700_123_457))
+            .expect("since-filtered gate history should read");
+        assert_eq!(since_rows.len(), 1);
+        assert_eq!(since_rows[0].reason, "disable after pilot");
 
         let _ = fs::remove_dir_all(root);
     }

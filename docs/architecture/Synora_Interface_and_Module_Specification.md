@@ -101,7 +101,7 @@ Purpose:
 Purpose:
 - Read-only visibility of real mutation gate config (`execution.*`).
 
-### 1.9 `synora config gate-history [--json]` (Phase 3 utility)
+### 1.9 `synora config gate-history [--json] [--enabled-only] [--limit <n>] [--since <unix_ts>]` (Phase 3 utility)
 
 Purpose:
 - Read-only visibility of gate change history records.
