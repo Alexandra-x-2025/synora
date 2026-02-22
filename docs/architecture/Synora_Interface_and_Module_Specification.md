@@ -176,3 +176,10 @@ For `v0.1`:
 - Command names and exit codes are frozen.
 - Breaking changes require new spec version section.
 - New flags must remain backward compatible.
+
+---
+
+## 6. Phase 3 Draft References / Phase 3 草案引用
+
+- `docs/security/Synora_Quarantine_Execution_Design.md`
+- `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`

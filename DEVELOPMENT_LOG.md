@@ -756,3 +756,23 @@ Examples:
 - 新增 Phase 3 实施前门禁清单：
 - `docs/testing/Phase3_Quarantine_Implementation_Gate.md`
 - 同步数据库 ER 文档的已实现/预留状态词汇
+
+---
+
+## 2026-02-22 – Phase 3 CLI Draft: Cleanup Quarantine Contract
+
+### English
+
+- Added `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
+- Defined draft command contract for:
+- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- Defined draft output schema (`operation_id`, rollback fields, status lifecycle)
+- Linked draft references into interface specification and roadmap kickoff notes
+
+### 中文
+
+- 新增 `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
+- 定义草案命令契约：
+- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- 定义草案输出结构（`operation_id`、回滚字段、状态生命周期）
+- 已在接口总规范与路线图启动记录中建立草案引用

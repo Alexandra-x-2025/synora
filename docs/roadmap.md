@@ -117,6 +117,9 @@ Kickoff update:
 - Added quarantine execution design draft:
 - `docs/security/Synora_Quarantine_Execution_Design.md`
 - Defined proposed command contract, rollback boundary, and audit status vocabulary
+- Added cleanup CLI contract draft:
+- `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
+- Defined CLI flags, output schema, and failure semantics for Phase 3 execution path
 
 ---
 
@@ -133,3 +136,6 @@ Kickoff update:
 - 已新增 quarantine 实执行设计草案：
 - `docs/security/Synora_Quarantine_Execution_Design.md`
 - 明确了建议命令契约、回滚边界与审计状态词汇
+- 已新增 cleanup CLI 契约草案：
+- `docs/architecture/Synora_Cleanup_Quarantine_CLI_Contract_Draft.md`
+- 明确了 Phase 3 执行路径的参数规则、输出字段与失败语义
