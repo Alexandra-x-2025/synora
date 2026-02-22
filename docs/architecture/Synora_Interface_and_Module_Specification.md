@@ -73,6 +73,11 @@ Path rules:
 - Default root is user home `.synora`.
 - Fallback to working directory `.synora` if home root is unavailable.
 
+### 1.5 `synora config db-list [--json]` (Phase 2 utility)
+
+Purpose:
+- Read-only listing of persisted software entries from SQLite repository.
+
 ---
 
 ## 2. Error Code Contract / 错误码契约

@@ -93,6 +93,15 @@ Purpose:
 Exit codes:
 - `0`: success
 
+### 2.5 `synora config db-list [--json]` (Phase 2 Read-only Utility)
+
+Purpose:
+- Inspect persisted `software` records in local SQLite repository.
+
+Notes:
+- Read-only helper for repository visibility validation.
+- Does not modify system state.
+
 ## 3. Global Behavior
 
 ### 3.1 Logging

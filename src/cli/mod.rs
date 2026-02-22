@@ -184,19 +184,55 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
 }
 
 fn handle_config(args: &[String]) -> Result<i32, String> {
-    if args.len() != 1 || args[0] != "init" {
+    if args.is_empty() {
         print_config_help();
         return Ok(EXIT_USAGE);
     }
 
-    let repo = ConfigRepository::default();
-    match repo.init_default() {
-        Ok(path) => {
+    match args[0].as_str() {
+        "init" => {
+            if args.len() != 1 {
+                print_config_help();
+                return Ok(EXIT_USAGE);
+            }
+
+            let repo = ConfigRepository::default();
+            match repo.init_default() {
+                Ok(path) => {
+                    let db_repo = DatabaseRepository::default();
+                    match db_repo.init_schema() {
+                        Ok(db_path) => {
+                            println!("Config initialized: {}", path.display());
+                            println!("Database initialized: {}", db_path.display());
+                            Ok(EXIT_OK)
+                        }
+                        Err(err) => {
+                            eprintln!("Integration failure: {err}");
+                            Ok(EXIT_INTEGRATION)
+                        }
+                    }
+                }
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    Ok(EXIT_INTEGRATION)
+                }
+            }
+        }
+        "db-list" => {
+            let as_json = args.iter().any(|v| v == "--json");
+            if args.len() > 2 || (args.len() == 2 && !as_json) {
+                print_config_help();
+                return Ok(EXIT_USAGE);
+            }
+
             let db_repo = DatabaseRepository::default();
-            match db_repo.init_schema() {
-                Ok(db_path) => {
-                    println!("Config initialized: {}", path.display());
-                    println!("Database initialized: {}", db_path.display());
+            match db_repo.list_software() {
+                Ok(rows) => {
+                    if as_json {
+                        print_db_software_json(&rows);
+                    } else {
+                        print_db_software_table(&rows);
+                    }
                     Ok(EXIT_OK)
                 }
                 Err(err) => {
@@ -205,9 +241,9 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 }
             }
         }
-        Err(err) => {
-            eprintln!("Integration failure: {err}");
-            Ok(EXIT_INTEGRATION)
+        _ => {
+            print_config_help();
+            Ok(EXIT_USAGE)
         }
     }
 }
@@ -325,10 +361,45 @@ fn print_update_help() {
 
 fn print_config_help() {
     println!("Usage: synora config init");
+    println!("   or: synora config db-list [--json]");
 }
 
 fn escape_json(input: &str) -> String {
     input.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn print_db_software_json(items: &[crate::repository::SoftwareRow]) {
+    println!("[");
+    for (idx, item) in items.iter().enumerate() {
+        let comma = if idx + 1 == items.len() { "" } else { "," };
+        println!(
+            "  {{\"id\":{},\"name\":\"{}\",\"version\":\"{}\",\"source\":\"{}\",\"install_path\":\"{}\",\"risk_level\":\"{}\"}}{}",
+            item.id,
+            escape_json(&item.name),
+            escape_json(&item.version),
+            escape_json(&item.source),
+            escape_json(&item.install_path),
+            escape_json(&item.risk_level),
+            comma
+        );
+    }
+    println!("]");
+}
+
+fn print_db_software_table(items: &[crate::repository::SoftwareRow]) {
+    if items.is_empty() {
+        println!("No database software entries.");
+        return;
+    }
+
+    println!("id  name  version  source  install_path  risk_level");
+    println!("--  ----  -------  ------  ------------  ----------");
+    for item in items {
+        println!(
+            "{}  {}  {}  {}  {}  {}",
+            item.id, item.name, item.version, item.source, item.install_path, item.risk_level
+        );
+    }
 }
 
 #[cfg(test)]
@@ -373,6 +444,13 @@ mod tests {
         let code = dispatch(&args(&["update", "check", "--verbose"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_OK);
+    }
+
+    #[test]
+    fn config_db_list_rejects_unknown_flag() {
+        let code = dispatch(&args(&["config", "db-list", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
     }
 
     #[test]

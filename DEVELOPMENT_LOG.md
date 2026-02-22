@@ -580,6 +580,22 @@ Ready to enter CLI development phase.
 
 ---
 
+## 2026-02-22 – Phase 2 Week 1 Visibility Hook: DB Read-only CLI
+
+### English
+
+- Added read-only CLI entry: `synora config db-list [--json]`
+- Command reads software entries from SQLite repository for local verification
+- Synced interface and CLI spec docs with Phase 2 utility command
+
+### 中文
+
+- 新增只读 CLI 入口：`synora config db-list [--json]`
+- 命令可读取 SQLite repository 中的软件记录，便于本地验证
+- 已将 Phase 2 工具命令同步到接口规范与 CLI 规范文档
+
+---
+
 ## Logging Rules
 
 Every significant change must be recorded.
