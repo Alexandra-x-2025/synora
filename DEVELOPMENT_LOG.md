@@ -988,3 +988,19 @@ Examples:
 - 将 Phase 3 门禁状态更新为 `Ready for Security Sign-off`
 - 同步项目状态与路线图，反映当前门禁就绪状态
 - 继续保持真实变更上线阻断，直至 security 签署完成
+
+---
+
+## 2026-02-22 – Phase 3 Security Sign-off Checklist Added
+
+### English
+
+- Added `docs/security/Synora_Security_Signoff_Checklist.md`
+- Linked gate blocking item to the checklist document
+- Standardized sign-off evidence collection format before real mutation go-live
+
+### 中文
+
+- 新增 `docs/security/Synora_Security_Signoff_Checklist.md`
+- 将门禁阻塞项关联到该签署清单
+- 在真实变更上线前统一签署证据收集格式

@@ -142,6 +142,8 @@ Kickoff update:
 - HIGH/CRITICAL risk confirmation gate implemented (`--risk high|critical` requires `--confirm`)
 - Gate state:
 - quarantine simulation gate is now ready for security sign-off
+- Sign-off artifact added:
+- `docs/security/Synora_Security_Signoff_Checklist.md`
 
 ---
 
@@ -183,3 +185,5 @@ Kickoff update:
 - 已实现 HIGH/CRITICAL 风险确认门禁（`--risk high|critical` 需 `--confirm`）
 - 门禁状态：
 - quarantine 模拟门禁已进入 security 签署准备
+- 已新增签署工件：
+- `docs/security/Synora_Security_Signoff_Checklist.md`

@@ -71,5 +71,5 @@ Scope: Must pass before enabling real quarantine mutation path
 
 - Current state: Ready for Security Sign-off
 - Blocking items before real mutation Go-Live:
-- Security review sign-off
+- Security review sign-off (see `docs/security/Synora_Security_Signoff_Checklist.md`)
 - Integration rollback simulation sign-off at adapter level
