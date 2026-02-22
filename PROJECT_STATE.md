@@ -6,17 +6,17 @@ Current date reference: 2026-02-22
 
 # Synora – 项目状态
 
-当前日期参考：2026-02-21
+当前日期参考：2026-02-22
 
 ---
 
 ## Current Phase
 
-Phase 2 – Planning & Intelligence Layer Kickoff
+Phase 3 – Stability & Ecosystem (Preparation)
 
 ## 当前阶段
 
-阶段 2 – 规划与智能层启动
+阶段 3 – 稳定与生态扩展（准备中）
 
 ---
 
@@ -26,13 +26,13 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - CLI contract hardening: Completed
 - Repository structure standardization: Completed
 - Docs taxonomy (`architecture/security/testing/product`): Completed
-- Integration reliability hardening: In progress
-- Database schema implementation: Pending
-- Rust project bootstrap: Started
+- Integration reliability hardening: Completed for Phase 2 scope
+- Database schema implementation: Completed (SQLite baseline + audit visibility)
+- Rust project bootstrap: Completed
 - Python prototype archive: Completed (`legacy/python/`)
 - Rust config/logging path alignment: Completed (`SYNORA_HOME` aware)
 - Phase 1 MVP readiness checklist: Completed
-- Phase 2 weekly planning: Started
+- Phase 2 weekly plan (Week 1-4): Completed
 
 ---
 
@@ -42,13 +42,13 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - CLI 契约加固：已完成
 - 仓库目录标准化：已完成
 - 文档分层（`architecture/security/testing/product`）：已完成
-- 集成可靠性加固：进行中
-- 数据库 Schema 实现：待开始
-- Rust 工程初始化：已开始
+- 集成可靠性加固：在 Phase 2 范围内已完成
+- 数据库 Schema 实现：已完成（SQLite 基线 + 审计可见性）
+- Rust 工程初始化：已完成
 - Python 原型归档：已完成（`legacy/python/`）
 - Rust 配置与日志路径对齐：已完成（支持 `SYNORA_HOME`）
 - Phase 1 MVP 就绪检查：已完成
-- Phase 2 周计划：已启动
+- Phase 2 周计划（Week 1-4）：已完成
 
 ---
 
@@ -59,6 +59,7 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - Exit code contract hardening (`2/3/4/10`)
 - README structure rationale sync
 - Phase 1 MVP readiness gate passed (2026-02-22)
+- Phase 2 intelligence layer weekly execution completed (2026-02-22)
 
 ## 已完成
 
@@ -67,39 +68,36 @@ Phase 2 – Planning & Intelligence Layer Kickoff
 - 退出码契约加固（`2/3/4/10`）
 - README 目录结构解释同步
 - Phase 1 MVP 就绪门禁通过（2026-02-22）
+- Phase 2 智能层周计划执行完成（2026-02-22）
 
 ---
 
 ## In Progress
 
-- Phase 2 Week 1 execution:
-- SQLite schema baseline implementation
-- Repository contract implementation and integration
-- Data model consistency review
-- Phase 2 Week 2 prototype:
-- Source suggestion scoring baseline
+- Phase 3 planning baseline:
+- Quarantine real action design
+- Registry backup blob format hardening
+- Integration review for ecosystem expansion
 
 ## 进行中
 
-- Phase 2 第 1 周执行中：
-- SQLite schema 基线实现
-- Repository 契约实现与接线
-- 数据模型一致性评审
-- Phase 2 第 2 周原型：
-- 来源推荐评分基线
+- Phase 3 规划基线：
+- Quarantine 实际动作设计
+- 注册表备份数据格式加固
+- 生态扩展前的集成评审
 
 ---
 
 ## Next
 
-- Finalize Week 1 repository tests and documentation sync
-- Start source suggestion prototype (Week 2)
-- Expand integration and scoring tests
-- Expand source recommendation rules and persistence strategy
+- Define Phase 3 entry criteria and stability gates
+- Design real quarantine execution path with rollback boundary
+- Design registry backup lifecycle (retention, integrity, restore checkpoints)
+- Prepare plugin-like source adapter contract draft
 
 ## 下一步
 
-- 完成第 1 周 repository 测试与文档同步收口
-- 启动来源推荐原型（第 2 周）
-- 扩展集成与评分测试
-- 扩展来源推荐规则与持久化策略
+- 定义 Phase 3 准入标准与稳定性门禁
+- 设计具备回滚边界的 quarantine 实际执行路径
+- 设计注册表备份生命周期（保留、完整性、恢复检查点）
+- 准备插件式来源适配器契约草案

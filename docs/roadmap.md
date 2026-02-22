@@ -63,7 +63,7 @@ Status: Completed (MVP Ready on 2026-02-22)
 - Improved retry strategy
 - Enhanced logging diagnostics
 
-Status: Planning (started on 2026-02-22)
+Status: Completed (Week 1-4 closed on 2026-02-22)
 
 ### Phase 2 Weekly Breakdown
 
@@ -72,9 +72,11 @@ Status: Planning (started on 2026-02-22)
 - Week 3: Rule-engine scoring and retry policy refinement
 - Week 4: Logging diagnostics + hardening tests + integration review
 
-Week 1 progress update:
-- SQLite repository baseline implemented in Rust (`software`, `update_history`, `quarantine`, `registry_backup`)
-- `config init` now bootstraps config + database schema
+Execution summary:
+- Week 1 completed: SQLite repository baseline and `config init` schema bootstrap
+- Week 2 completed: source suggestion scoring + update-signal blending + verbose diagnostics
+- Week 3 completed: `update apply` plan persistence + `config history-list` audit visibility
+- Week 4 completed: `config audit-summary` aggregates + confirmed-plan safety placeholders (`registry_backup` / `quarantine`)
 
 ---
 
@@ -85,7 +87,7 @@ Week 1 progress update:
 - 重试策略增强
 - 日志诊断优化
 
-状态：规划中（2026-02-22 启动）
+状态：已完成（Week 1-4 于 2026-02-22 收口）
 
 ### 阶段 2 周计划
 
@@ -94,9 +96,11 @@ Week 1 progress update:
 - 第 3 周：规则引擎评分与重试策略优化
 - 第 4 周：日志诊断增强 + 加固测试 + 集成评审
 
-第 1 周进展：
-- 已在 Rust 中实现 SQLite repository 基线（`software`、`update_history`、`quarantine`、`registry_backup`）
-- `config init` 已支持配置文件与数据库 schema 的联动初始化
+执行总结：
+- 第 1 周完成：SQLite repository 基线与 `config init` schema 联动初始化
+- 第 2 周完成：来源推荐评分、更新信号融合与 `--verbose` 诊断输出
+- 第 3 周完成：`update apply` 计划持久化与 `config history-list` 审计可见
+- 第 4 周完成：`config audit-summary` 聚合诊断与 confirmed 计划安全占位审计（`registry_backup` / `quarantine`）
 
 ---
 
