@@ -540,6 +540,12 @@ fn format_security_error(err: SecurityError) -> String {
         SecurityError::ConfirmationRequired(risk) => {
             format!("risk '{risk}' requires explicit --confirm")
         }
+        SecurityError::RealMutationDisabled => {
+            "real mutation is disabled; set execution.real_mutation_enabled=true".to_string()
+        }
+        SecurityError::ApprovalRecordMissing => {
+            "approval record is required; set execution.approval_record_ref".to_string()
+        }
     }
 }
 
@@ -915,7 +921,7 @@ mod tests {
     }
 
     #[test]
-    fn cleanup_quarantine_confirm_json_returns_ok() {
+    fn cleanup_quarantine_confirm_json_returns_security_when_gate_disabled() {
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
@@ -925,7 +931,7 @@ mod tests {
             "--json",
         ]))
         .expect("dispatch should return exit code");
-        assert_eq!(code, EXIT_OK);
+        assert_eq!(code, EXIT_SECURITY);
     }
 
     #[test]
@@ -956,7 +962,7 @@ mod tests {
     }
 
     #[test]
-    fn cleanup_quarantine_confirm_simulated_failure_returns_integration() {
+    fn cleanup_quarantine_confirm_simulated_failure_returns_security_when_gate_disabled() {
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
@@ -967,7 +973,7 @@ mod tests {
             "--json",
         ]))
         .expect("dispatch should return exit code");
-        assert_eq!(code, EXIT_INTEGRATION);
+        assert_eq!(code, EXIT_SECURITY);
     }
 
     #[test]
@@ -986,7 +992,7 @@ mod tests {
     }
 
     #[test]
-    fn cleanup_quarantine_high_risk_with_confirm_returns_ok() {
+    fn cleanup_quarantine_high_risk_with_confirm_returns_security_when_gate_disabled() {
         let code = dispatch(&args(&[
             "cleanup",
             "quarantine",
@@ -998,7 +1004,7 @@ mod tests {
             "--json",
         ]))
         .expect("dispatch should return exit code");
-        assert_eq!(code, EXIT_OK);
+        assert_eq!(code, EXIT_SECURITY);
     }
 
     #[test]

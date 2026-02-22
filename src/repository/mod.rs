@@ -4,6 +4,7 @@ use std::io;
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection};
+use serde_json::Value;
 
 use crate::paths::ensure_synora_home;
 
@@ -39,24 +40,66 @@ pub struct ConfigRepository {
     pub base_dir: Option<PathBuf>,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct ExecutionGateConfig {
+    pub real_mutation_enabled: bool,
+    pub approval_record_ref: String,
+}
+
 impl ConfigRepository {
+    fn resolve_base_dir(&self) -> io::Result<PathBuf> {
+        match &self.base_dir {
+            Some(base) => Ok(base.clone()),
+            None => ensure_synora_home(),
+        }
+    }
+
     pub fn init_default(&self) -> io::Result<PathBuf> {
-        let root = match &self.base_dir {
-            Some(base) => base.clone(),
-            None => ensure_synora_home()?,
-        };
+        let root = self.resolve_base_dir()?;
 
         fs::create_dir_all(&root)?;
         let config = root.join("config.json");
         if !config.exists() {
             let payload = format!(
-                "{{\n  \"log_level\": \"INFO\",\n  \"quarantine_dir\": \"{}\",\n  \"allow_apply_updates\": false\n}}\n",
+                "{{\n  \"log_level\": \"INFO\",\n  \"quarantine_dir\": \"{}\",\n  \"allow_apply_updates\": false,\n  \"execution\": {{\n    \"real_mutation_enabled\": false,\n    \"gate_version\": \"phase3-draft-v1\",\n    \"approval_record_ref\": \"\"\n  }}\n}}\n",
                 root.join("quarantine").display()
             );
             fs::write(&config, payload)?;
         }
 
         Ok(config)
+    }
+
+    pub fn load_execution_gate(&self) -> io::Result<ExecutionGateConfig> {
+        let root = self.resolve_base_dir()?;
+        let config_path = root.join("config.json");
+        if !config_path.exists() {
+            return Ok(ExecutionGateConfig::default());
+        }
+
+        let content = fs::read_to_string(config_path)?;
+        let parsed: Value = serde_json::from_str(&content)
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
+        let execution = parsed
+            .get("execution")
+            .and_then(|v| v.as_object())
+            .cloned()
+            .unwrap_or_default();
+
+        let real_mutation_enabled = execution
+            .get("real_mutation_enabled")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let approval_record_ref = execution
+            .get("approval_record_ref")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+
+        Ok(ExecutionGateConfig {
+            real_mutation_enabled,
+            approval_record_ref,
+        })
     }
 }
 
@@ -350,6 +393,47 @@ mod tests {
         assert!(config_path.exists());
         assert!(content.contains("\"quarantine_dir\""));
         assert!(content.contains("allow_apply_updates"));
+        assert!(content.contains("real_mutation_enabled"));
+        assert!(content.contains("approval_record_ref"));
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn load_execution_gate_reads_defaults_when_file_missing() {
+        let root = unique_dir("synora-gate-default-test");
+        let repo = ConfigRepository {
+            base_dir: Some(root.clone()),
+        };
+
+        let gate = repo
+            .load_execution_gate()
+            .expect("load_execution_gate should succeed");
+        assert!(!gate.real_mutation_enabled);
+        assert!(gate.approval_record_ref.is_empty());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn load_execution_gate_reads_config_values() {
+        let root = unique_dir("synora-gate-config-test");
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
+
+        let repo = ConfigRepository {
+            base_dir: Some(root.clone()),
+        };
+
+        let gate = repo
+            .load_execution_gate()
+            .expect("load_execution_gate should succeed");
+        assert!(gate.real_mutation_enabled);
+        assert_eq!(gate.approval_record_ref, "docs/security/approval.md");
 
         let _ = fs::remove_dir_all(root);
     }

@@ -62,6 +62,9 @@ Implemented in runtime:
 - symlink escape blocking
 - allowlist root enforcement
 - HIGH/CRITICAL risk confirmation gate
+- runtime real-mutation gate check:
+- `execution.real_mutation_enabled`
+- `execution.approval_record_ref`
 
 Still gated:
 - Real file mutation

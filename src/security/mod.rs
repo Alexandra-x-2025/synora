@@ -10,6 +10,8 @@ pub enum SecurityError {
     TargetOutsideAllowlist(String),
     SymbolicLinkDetected(String),
     ConfirmationRequired(String),
+    RealMutationDisabled,
+    ApprovalRecordMissing,
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -94,6 +96,20 @@ impl SecurityGuard {
         }
         Ok(())
     }
+
+    pub fn validate_real_mutation_gate(
+        &self,
+        real_mutation_enabled: bool,
+        approval_record_ref: &str,
+    ) -> Result<(), SecurityError> {
+        if !real_mutation_enabled {
+            return Err(SecurityError::RealMutationDisabled);
+        }
+        if approval_record_ref.trim().is_empty() {
+            return Err(SecurityError::ApprovalRecordMissing);
+        }
+        Ok(())
+    }
 }
 
 fn normalize_path(path: &Path) -> PathBuf {
@@ -147,6 +163,24 @@ mod tests {
             .validate_risk_confirmation("high", false)
             .expect_err("high risk should require confirmation");
         assert!(matches!(err, SecurityError::ConfirmationRequired(_)));
+    }
+
+    #[test]
+    fn validate_real_mutation_gate_blocks_when_disabled() {
+        let guard = SecurityGuard;
+        let err = guard
+            .validate_real_mutation_gate(false, "docs/security/record.md")
+            .expect_err("disabled gate should be rejected");
+        assert!(matches!(err, SecurityError::RealMutationDisabled));
+    }
+
+    #[test]
+    fn validate_real_mutation_gate_blocks_when_record_missing() {
+        let guard = SecurityGuard;
+        let err = guard
+            .validate_real_mutation_gate(true, "   ")
+            .expect_err("missing record should be rejected");
+        assert!(matches!(err, SecurityError::ApprovalRecordMissing));
     }
 
     #[cfg(unix)]

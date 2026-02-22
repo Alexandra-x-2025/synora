@@ -1202,3 +1202,23 @@ Examples:
 - 新增助手模式选择规则（`code` 与 `docs-only`）
 - 新增两类固定输出模板
 - 统一后续助手推送输出结构，减少临时判断
+
+---
+
+## 2026-02-22 – Real Mutation Runtime Gate Wired (Default-Off)
+
+### English
+
+- Added runtime gate checks before `cleanup quarantine --confirm` execution:
+- `execution.real_mutation_enabled` must be `true`
+- `execution.approval_record_ref` must be non-empty
+- Added security errors and CLI mapping for blocked confirm path
+- Updated default `config init` payload with execution gate fields
+
+### 中文
+
+- 在 `cleanup quarantine --confirm` 执行前接入运行时门禁校验：
+- `execution.real_mutation_enabled` 必须为 `true`
+- `execution.approval_record_ref` 必须非空
+- 新增对应安全错误与 CLI 阻断映射
+- 更新 `config init` 默认配置，加入 execution 门禁字段

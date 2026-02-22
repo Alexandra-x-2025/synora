@@ -1,6 +1,6 @@
 use crate::domain::{CleanupPlan, SoftwareItem, SourceRecommendation, UpdateItem, UpdatePlan};
 use crate::integration::{IntegrationError, ParsePath, WingetClient};
-use crate::repository::DatabaseRepository;
+use crate::repository::{ConfigRepository, DatabaseRepository};
 use crate::security::{SecurityError, SecurityGuard};
 use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -123,6 +123,7 @@ impl UpdateService {
 #[derive(Default, Clone)]
 pub struct CleanupService {
     repo: DatabaseRepository,
+    config_repo: ConfigRepository,
     guard: SecurityGuard,
 }
 
@@ -227,6 +228,17 @@ impl CleanupService {
         let mut written = 1usize;
 
         if plan.requested_mode == "confirm" {
+            let gate = self
+                .config_repo
+                .load_execution_gate()
+                .map_err(|err| CleanupError::Repository(err.into()))?;
+            self.guard
+                .validate_real_mutation_gate(
+                    gate.real_mutation_enabled,
+                    gate.approval_record_ref.as_str(),
+                )
+                .map_err(CleanupError::Security)?;
+
             // M3 still uses simulated execution, but crosses mutation boundary explicitly.
             self.repo.add_registry_backup(
                 "HKLM",
@@ -484,6 +496,9 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
             guard: crate::security::SecurityGuard,
         };
 
@@ -518,8 +533,17 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
             guard: crate::security::SecurityGuard,
         };
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
 
         let plan = service
             .plan_quarantine("Git.Git", true, false)
@@ -571,8 +595,17 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
             guard: crate::security::SecurityGuard,
         };
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
 
         let plan = service
             .plan_quarantine("Git.Git", true, false)
@@ -606,8 +639,17 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path.clone()),
             },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
             guard: crate::security::SecurityGuard,
         };
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
 
         let plan = service
             .plan_quarantine("Git.Git", true, false)
@@ -641,6 +683,9 @@ mod tests {
             repo: DatabaseRepository {
                 db_path: Some(db_path),
             },
+            config_repo: ConfigRepository {
+                base_dir: Some(root),
+            },
             guard: crate::security::SecurityGuard,
         };
 
@@ -652,5 +697,75 @@ mod tests {
             .expect_err("should reject traversal");
 
         assert!(matches!(err, super::CleanupError::Security(_)));
+    }
+
+    #[test]
+    fn cleanup_confirm_blocks_when_real_mutation_gate_disabled() {
+        let root = unique_dir("synora-cleanup-gate-disabled-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path),
+            },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
+            guard: crate::security::SecurityGuard,
+        };
+
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": false,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
+
+        let plan = service
+            .plan_quarantine("Git.Git", true, false)
+            .expect("plan should build");
+        let err = service
+            .execute_cleanup_plan(plan, false, false)
+            .expect_err("confirm should be blocked");
+        assert!(matches!(
+            err,
+            super::CleanupError::Security(crate::security::SecurityError::RealMutationDisabled)
+        ));
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn cleanup_confirm_blocks_when_approval_record_missing() {
+        let root = unique_dir("synora-cleanup-gate-missing-record-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path),
+            },
+            config_repo: ConfigRepository {
+                base_dir: Some(root.clone()),
+            },
+            guard: crate::security::SecurityGuard,
+        };
+
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"\"\n  }\n}\n",
+        )
+        .expect("config should be written");
+
+        let plan = service
+            .plan_quarantine("Git.Git", true, false)
+            .expect("plan should build");
+        let err = service
+            .execute_cleanup_plan(plan, false, false)
+            .expect_err("confirm should be blocked");
+        assert!(matches!(
+            err,
+            super::CleanupError::Security(crate::security::SecurityError::ApprovalRecordMissing)
+        ));
+
+        let _ = fs::remove_dir_all(root);
     }
 }
