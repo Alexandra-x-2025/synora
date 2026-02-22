@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug)]
@@ -7,6 +8,7 @@ pub enum SecurityError {
     OperationNotAllowlisted(String),
     PathTraversalDetected(String),
     TargetOutsideAllowlist(String),
+    SymbolicLinkDetected(String),
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -59,6 +61,24 @@ impl SecurityGuard {
             ));
         }
 
+        // Reject any existing symlink component between root and target parent.
+        if let Some(parent) = normalized_target.parent() {
+            let mut current = normalized_root.clone();
+            for component in parent
+                .components()
+                .skip(normalized_root.components().count())
+            {
+                current.push(component.as_os_str());
+                if let Ok(meta) = fs::symlink_metadata(&current) {
+                    if meta.file_type().is_symlink() {
+                        return Err(SecurityError::SymbolicLinkDetected(
+                            current.display().to_string(),
+                        ));
+                    }
+                }
+            }
+        }
+
         Ok(normalized_target)
     }
 }
@@ -105,5 +125,33 @@ mod tests {
             .validate_target_path(target, root)
             .expect_err("outside target should be rejected");
         assert!(matches!(err, SecurityError::TargetOutsideAllowlist(_)));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn validate_target_path_rejects_symlink_component() {
+        use std::os::unix::fs::symlink;
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let base = std::env::temp_dir().join(format!("synora-sec-symlink-{unique}"));
+        let root = base.join("root");
+        let _ = fs::create_dir_all(&root);
+        let link = root.join("linked");
+        let target_dir = base.join("target");
+        let _ = fs::create_dir_all(&target_dir);
+        symlink(&target_dir, &link).expect("symlink should be created");
+
+        let guard = SecurityGuard;
+        let candidate = link.join("file.txt");
+        let err = guard
+            .validate_target_path(&candidate, &root)
+            .expect_err("symlink component should be rejected");
+        assert!(matches!(err, SecurityError::SymbolicLinkDetected(_)));
+
+        let _ = fs::remove_dir_all(base);
     }
 }

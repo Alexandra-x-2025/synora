@@ -136,6 +136,8 @@ Kickoff update:
 - No-Go for real mutation path until security controls are signed off
 - Security control progress:
 - canonical target validation + traversal blocking + allowlist root constraint implemented for cleanup path
+- Security control progress:
+- symbolic-link escape blocking implemented for cleanup path
 
 ---
 
@@ -171,3 +173,5 @@ Kickoff update:
 - 真实变更路径 No-Go（需安全控制签署）
 - 安全控制进展：
 - cleanup 路径已实现 canonical 目标校验、路径穿越拦截与 allowlist 根目录约束
+- 安全控制进展：
+- cleanup 路径已实现 symbolic-link escape 拦截

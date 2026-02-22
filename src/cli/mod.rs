@@ -515,6 +515,9 @@ fn format_security_error(err: SecurityError) -> String {
         SecurityError::TargetOutsideAllowlist(path) => {
             format!("target path '{path}' is outside allowlist root")
         }
+        SecurityError::SymbolicLinkDetected(path) => {
+            format!("symbolic-link component detected at '{path}'")
+        }
     }
 }
 

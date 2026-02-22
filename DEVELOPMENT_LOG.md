@@ -938,3 +938,19 @@ Examples:
 - allowlist 根目录约束
 - 将 cleanup 执行接入安全校验路径，并将违规映射为退出码 `3`
 - 新增安全层与 CLI 层的路径穿越拒绝测试
+
+---
+
+## 2026-02-22 – Phase 3 Security Control Progress: Symbolic-Link Escape Blocking
+
+### English
+
+- Added symbolic-link component detection in cleanup target validation
+- Cleanup path now rejects existing symlink escape paths with security exit `3`
+- Added security-layer symlink rejection test (unix target)
+
+### 中文
+
+- 在 cleanup 目标路径校验中新增 symbolic-link 组件检测
+- cleanup 路径现在会拒绝 symlink escape 路径，并返回安全退出码 `3`
+- 新增安全层 symlink 拒绝测试（unix 目标）
