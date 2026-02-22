@@ -3165,6 +3165,24 @@ fn validate_job_worker_run_args(args: &JobWorkerRunArgs) -> Result<(), CliError>
     Ok(())
 }
 
+fn compute_worker_retry_schedule(
+    ok: bool,
+    deadlettered: bool,
+    attempt_after: i64,
+    finished_at: i64,
+    scheduled_at_before: i64,
+) -> (i64, i64) {
+    if ok {
+        return (0, scheduled_at_before);
+    }
+    if deadlettered {
+        return (0, scheduled_at_before);
+    }
+    let backoff_seconds = 5_i64 * attempt_after;
+    let next_scheduled_at = finished_at.saturating_add(backoff_seconds);
+    (backoff_seconds, next_scheduled_at)
+}
+
 fn claim_next_queued_job(conn: &mut Connection, now: i64) -> Result<Option<ClaimedJob>, CliError> {
     let tx = conn.transaction()?;
     let picked = tx
@@ -3269,25 +3287,39 @@ fn job_worker_run(args: JobWorkerRunArgs) -> Result<(), CliError> {
 
     let (ok, message) = execute_worker_job(&job);
     let attempt_after = job.attempt_count + 1;
+    let finished_at = unix_ts();
     let (new_status, deadlettered, error_text) = if ok {
         ("success", false, String::new())
     } else if attempt_after >= job.max_attempts {
         ("deadletter", true, message.clone())
     } else {
-        ("failed", false, message.clone())
+        ("queued", false, message.clone())
     };
-    let finished_at = unix_ts();
-
+    let (backoff_seconds, next_scheduled_at) = compute_worker_retry_schedule(
+        ok,
+        deadlettered,
+        attempt_after,
+        finished_at,
+        job.scheduled_at,
+    );
     conn.execute(
         r#"
         UPDATE job_queue
         SET status = ?1,
             attempt_count = ?2,
-            finished_at = ?3,
-            last_error = ?4
-        WHERE id = ?5
+            scheduled_at = ?3,
+            finished_at = ?4,
+            last_error = ?5
+        WHERE id = ?6
         "#,
-        params![new_status, attempt_after, finished_at, error_text, job.id],
+        params![
+            new_status,
+            attempt_after,
+            next_scheduled_at,
+            finished_at,
+            error_text,
+            job.id
+        ],
     )?;
 
     let payload = json!({
@@ -3301,6 +3333,8 @@ fn job_worker_run(args: JobWorkerRunArgs) -> Result<(), CliError> {
         "new_status": new_status,
         "attempt_count": attempt_after,
         "max_attempts": job.max_attempts,
+        "next_scheduled_at": next_scheduled_at,
+        "backoff_seconds": backoff_seconds,
         "started_at": started_at,
         "finished_at": finished_at,
         "duration_ms": (finished_at - started_at) * 1000,
@@ -5077,5 +5111,12 @@ mod tests {
         })
         .unwrap_err();
         assert!(matches!(err, CliError::Usage(_)));
+    }
+
+    #[test]
+    fn compute_worker_retry_schedule_deadletter_has_no_backoff() {
+        let (backoff, next_at) = compute_worker_retry_schedule(false, true, 3, 1000, 900);
+        assert_eq!(backoff, 0);
+        assert_eq!(next_at, 900);
     }
 }
