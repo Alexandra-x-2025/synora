@@ -138,6 +138,8 @@ Kickoff update:
 - canonical target validation + traversal blocking + allowlist root constraint implemented for cleanup path
 - Security control progress:
 - symbolic-link escape blocking implemented for cleanup path
+- Security control progress:
+- HIGH/CRITICAL risk confirmation gate implemented (`--risk high|critical` requires `--confirm`)
 
 ---
 
@@ -175,3 +177,5 @@ Kickoff update:
 - cleanup 路径已实现 canonical 目标校验、路径穿越拦截与 allowlist 根目录约束
 - 安全控制进展：
 - cleanup 路径已实现 symbolic-link escape 拦截
+- 安全控制进展：
+- 已实现 HIGH/CRITICAL 风险确认门禁（`--risk high|critical` 需 `--confirm`）

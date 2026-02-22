@@ -43,7 +43,7 @@ Scope: Must pass before enabling real quarantine mutation path
 - [x] Path traversal blocked
 - [x] Symbolic-link escape blocked
 - [x] Target roots constrained by allowlist
-- [ ] Confirmed mode required for HIGH/CRITICAL risk actions
+- [x] Confirmed mode required for HIGH/CRITICAL risk actions
 
 ## 6. Test Gates
 

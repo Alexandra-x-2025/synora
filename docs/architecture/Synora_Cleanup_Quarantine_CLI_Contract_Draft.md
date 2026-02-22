@@ -13,7 +13,7 @@ Compatibility: Does not modify frozen `v0.1` contract
 Executable: `synora`
 
 Command:
-- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose] [--risk <low|medium|high|critical>]`
 - testing-only simulation flags:
 - `--simulate-failure`
 - `--simulate-rollback-failure`
@@ -24,8 +24,10 @@ Rules:
 - `--dry-run` and `--confirm` are mutually exclusive.
 - `--json` enables machine-readable output.
 - `--verbose` is text-mode diagnostic output; ignored in JSON mode.
+- `--risk` defaults to `medium`.
 - Simulation flags require `--confirm`.
 - `--simulate-rollback-failure` requires `--simulate-failure`.
+- `high` and `critical` risk require explicit `--confirm`.
 
 ---
 

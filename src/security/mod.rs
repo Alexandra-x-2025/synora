@@ -9,6 +9,7 @@ pub enum SecurityError {
     PathTraversalDetected(String),
     TargetOutsideAllowlist(String),
     SymbolicLinkDetected(String),
+    ConfirmationRequired(String),
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -81,6 +82,18 @@ impl SecurityGuard {
 
         Ok(normalized_target)
     }
+
+    pub fn validate_risk_confirmation(
+        &self,
+        risk_level: &str,
+        confirmed: bool,
+    ) -> Result<(), SecurityError> {
+        let risk = risk_level.to_ascii_lowercase();
+        if (risk == "high" || risk == "critical") && !confirmed {
+            return Err(SecurityError::ConfirmationRequired(risk));
+        }
+        Ok(())
+    }
 }
 
 fn normalize_path(path: &Path) -> PathBuf {
@@ -125,6 +138,15 @@ mod tests {
             .validate_target_path(target, root)
             .expect_err("outside target should be rejected");
         assert!(matches!(err, SecurityError::TargetOutsideAllowlist(_)));
+    }
+
+    #[test]
+    fn validate_risk_confirmation_blocks_high_without_confirm() {
+        let guard = SecurityGuard;
+        let err = guard
+            .validate_risk_confirmation("high", false)
+            .expect_err("high risk should require confirmation");
+        assert!(matches!(err, SecurityError::ConfirmationRequired(_)));
     }
 
     #[cfg(unix)]

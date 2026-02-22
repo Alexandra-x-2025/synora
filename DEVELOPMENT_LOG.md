@@ -954,3 +954,21 @@ Examples:
 - 在 cleanup 目标路径校验中新增 symbolic-link 组件检测
 - cleanup 路径现在会拒绝 symlink escape 路径，并返回安全退出码 `3`
 - 新增安全层 symlink 拒绝测试（unix 目标）
+
+---
+
+## 2026-02-22 – Phase 3 Security Control Progress: High/Critical Confirmation Gate
+
+### English
+
+- Added cleanup risk gate via `--risk <low|medium|high|critical>` option
+- Enforced rule: `high`/`critical` risk requires explicit `--confirm`
+- Violations map to security exit code `3`
+- Added CLI tests for high-risk blocked and confirmed-pass scenarios
+
+### 中文
+
+- 为 cleanup 增加风险门禁参数：`--risk <low|medium|high|critical>`
+- 强制规则：`high`/`critical` 风险必须显式 `--confirm`
+- 违规映射到安全退出码 `3`
+- 新增 CLI 测试覆盖高风险阻断与确认放行场景

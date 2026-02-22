@@ -1,7 +1,7 @@
 use crate::integration::{IntegrationError, ParsePath};
 use crate::logging::log_event;
 use crate::repository::{ConfigRepository, DatabaseRepository};
-use crate::security::SecurityError;
+use crate::security::{SecurityError, SecurityGuard};
 use crate::service::{
     CleanupError, CleanupService, SoftwareService, SourceSuggestionService, UpdateService,
 };
@@ -217,6 +217,7 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
     let mut verbose = false;
     let mut simulate_failure = false;
     let mut simulate_rollback_failure = false;
+    let mut risk_level = "medium".to_string();
 
     let mut idx = 1usize;
     while idx < args.len() {
@@ -261,6 +262,19 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
                 simulate_rollback_failure = true;
                 idx += 1;
             }
+            "--risk" => {
+                if idx + 1 >= args.len() {
+                    eprintln!("Validation error: --risk requires a value");
+                    return Ok(EXIT_USAGE);
+                }
+                let value = args[idx + 1].to_ascii_lowercase();
+                if value != "low" && value != "medium" && value != "high" && value != "critical" {
+                    eprintln!("Validation error: --risk must be one of low|medium|high|critical");
+                    return Ok(EXIT_USAGE);
+                }
+                risk_level = value;
+                idx += 2;
+            }
             _ => {
                 eprintln!("Validation error: unknown option '{}'", args[idx]);
                 return Ok(EXIT_USAGE);
@@ -279,6 +293,11 @@ fn handle_cleanup(args: &[String]) -> Result<i32, String> {
     if simulate_rollback_failure && !simulate_failure {
         eprintln!("Validation error: --simulate-rollback-failure requires --simulate-failure");
         return Ok(EXIT_USAGE);
+    }
+    let guard = SecurityGuard;
+    if let Err(se) = guard.validate_risk_confirmation(&risk_level, confirmed) {
+        eprintln!("Security blocked: {}", format_security_error(se));
+        return Ok(EXIT_SECURITY);
     }
 
     let service = CleanupService::default();
@@ -518,6 +537,9 @@ fn format_security_error(err: SecurityError) -> String {
         SecurityError::SymbolicLinkDetected(path) => {
             format!("symbolic-link component detected at '{path}'")
         }
+        SecurityError::ConfirmationRequired(risk) => {
+            format!("risk '{risk}' requires explicit --confirm")
+        }
     }
 }
 
@@ -611,7 +633,7 @@ fn print_update_help() {
 
 fn print_cleanup_help() {
     println!(
-        "Usage: synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose] [--simulate-failure] [--simulate-rollback-failure]"
+        "Usage: synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose] [--risk <low|medium|high|critical>] [--simulate-failure] [--simulate-rollback-failure]"
     );
 }
 
@@ -946,6 +968,37 @@ mod tests {
         ]))
         .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_INTEGRATION);
+    }
+
+    #[test]
+    fn cleanup_quarantine_high_risk_requires_confirm() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--risk",
+            "high",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_SECURITY);
+    }
+
+    #[test]
+    fn cleanup_quarantine_high_risk_with_confirm_returns_ok() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--risk",
+            "high",
+            "--confirm",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
     }
 
     #[test]
