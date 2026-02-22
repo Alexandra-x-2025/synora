@@ -1222,3 +1222,19 @@ Examples:
 - `execution.approval_record_ref` 必须非空
 - 新增对应安全错误与 CLI 阻断映射
 - 更新 `config init` 默认配置，加入 execution 门禁字段
+
+---
+
+## 2026-02-22 – Gate Visibility Command and Windows Config Compatibility
+
+### English
+
+- Added `synora config gate-show [--json]` for runtime gate visibility.
+- Fixed `config init` JSON generation to avoid Windows path escaping issues.
+- Added backward-compatible fallback parsing for legacy malformed config content.
+
+### 中文
+
+- 新增 `synora config gate-show [--json]`，用于查看运行时门禁状态。
+- 修复 `config init` JSON 生成，避免 Windows 路径转义导致配置非法。
+- 增加旧配置兼容解析，避免历史 malformed 配置触发集成错误。

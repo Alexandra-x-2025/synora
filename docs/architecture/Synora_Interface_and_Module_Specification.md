@@ -96,7 +96,12 @@ Purpose:
 Purpose:
 - Read-only aggregate metrics from `update_history` for operational diagnostics.
 
-### 1.8 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
+### 1.8 `synora config gate-show [--json]` (Phase 3 utility)
+
+Purpose:
+- Read-only visibility of real mutation gate config (`execution.*`).
+
+### 1.9 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 prototype)
 
 Purpose:
 - Produce source recommendation candidates with score and reasons.

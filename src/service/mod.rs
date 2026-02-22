@@ -410,7 +410,7 @@ fn score_recommendation(
 #[cfg(test)]
 mod tests {
     use super::{score_recommendation, CleanupService, UpdateService};
-    use crate::repository::DatabaseRepository;
+    use crate::repository::{ConfigRepository, DatabaseRepository};
     use rusqlite::Connection;
     use std::fs;
     use std::time::{SystemTime, UNIX_EPOCH};

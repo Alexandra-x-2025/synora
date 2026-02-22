@@ -462,6 +462,37 @@ fn handle_config(args: &[String]) -> Result<i32, String> {
                 }
             }
         }
+        "gate-show" => {
+            let as_json = args.iter().any(|v| v == "--json");
+            if args.len() > 2 || (args.len() == 2 && !as_json) {
+                print_config_help();
+                return Ok(EXIT_USAGE);
+            }
+
+            let repo = ConfigRepository::default();
+            match repo.load_execution_gate() {
+                Ok(gate) => {
+                    if as_json {
+                        print_config_gate_json(
+                            gate.real_mutation_enabled,
+                            &gate.gate_version,
+                            &gate.approval_record_ref,
+                        );
+                    } else {
+                        print_config_gate_table(
+                            gate.real_mutation_enabled,
+                            &gate.gate_version,
+                            &gate.approval_record_ref,
+                        );
+                    }
+                    Ok(EXIT_OK)
+                }
+                Err(err) => {
+                    eprintln!("Integration failure: {err}");
+                    Ok(EXIT_INTEGRATION)
+                }
+            }
+        }
         _ => {
             print_config_help();
             Ok(EXIT_USAGE)
@@ -648,6 +679,7 @@ fn print_config_help() {
     println!("   or: synora config db-list [--json]");
     println!("   or: synora config history-list [--json]");
     println!("   or: synora config audit-summary [--json]");
+    println!("   or: synora config gate-show [--json]");
 }
 
 fn print_source_help() {
@@ -751,6 +783,29 @@ fn print_db_update_audit_summary_table(summary: &crate::repository::UpdateAuditS
     println!("planned_confirmed: {}", summary.planned_confirmed);
     println!("planned_dry_run: {}", summary.planned_dry_run);
     println!("latest_timestamp: {latest}");
+}
+
+fn print_config_gate_json(real_mutation_enabled: bool, gate_version: &str, approval_record_ref: &str) {
+    let approval_record_present = !approval_record_ref.trim().is_empty();
+    println!(
+        "{{\"real_mutation_enabled\":{},\"gate_version\":\"{}\",\"approval_record_ref\":\"{}\",\"approval_record_present\":{}}}",
+        real_mutation_enabled,
+        escape_json(gate_version),
+        escape_json(approval_record_ref),
+        approval_record_present
+    );
+}
+
+fn print_config_gate_table(real_mutation_enabled: bool, gate_version: &str, approval_record_ref: &str) {
+    println!("real_mutation_enabled: {}", real_mutation_enabled);
+    println!("gate_version: {}", gate_version);
+    if approval_record_ref.trim().is_empty() {
+        println!("approval_record_ref: <empty>");
+        println!("approval_record_present: false");
+    } else {
+        println!("approval_record_ref: {}", approval_record_ref);
+        println!("approval_record_present: true");
+    }
 }
 
 fn print_source_suggestions_json(items: &[crate::domain::SourceRecommendation]) {
@@ -883,6 +938,20 @@ mod tests {
         let code = dispatch(&args(&["config", "audit-summary", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_show_rejects_unknown_flag() {
+        let code = dispatch(&args(&["config", "gate-show", "--bad-flag"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn config_gate_show_json_returns_ok() {
+        let code = dispatch(&args(&["config", "gate-show", "--json"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
     }
 
     #[test]

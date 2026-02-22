@@ -20,10 +20,11 @@ Quick regression checks for CLI contract and integration behavior.
 10. `cargo run -- config db-list --json`
 11. `cargo run -- config history-list --json`
 12. `cargo run -- config audit-summary --json`
-13. `cargo run -- source suggest --json`
-14. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
-15. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
-16. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
+13. `cargo run -- config gate-show --json`
+14. `cargo run -- source suggest --json`
+15. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
+16. `cargo run -- cleanup quarantine --id Git.Git --confirm --json`
+17. `cargo run -- cleanup quarantine --id Git.Git --confirm --simulate-failure --json`
 
 ## Expected Outcomes
 
@@ -39,7 +40,8 @@ Quick regression checks for CLI contract and integration behavior.
 10. Returns JSON array of persisted software records (can be empty).
 11. Returns JSON array of persisted update history records (can be empty).
 12. Returns JSON object with audit aggregates (`total`, `planned_confirmed`, `planned_dry_run`, `latest_timestamp`).
-13. Returns JSON array of source recommendations (can be empty).
-14. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
-15. Returns JSON object for cleanup confirm simulated execution with `status: "quarantine_success"` and `mutation_boundary_reached: true`.
-16. Returns JSON payload with failure statuses and exits with code `4`; history should include rollback status row.
+13. Returns JSON gate snapshot with `real_mutation_enabled` and `gate_version`.
+14. Returns JSON array of source recommendations (can be empty).
+15. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.
+16. Returns security-blocked output when gate is disabled (default), exit code `3`.
+17. Returns security-blocked output when gate is disabled (default), exit code `3`.

@@ -132,7 +132,22 @@ Fields:
 - `planned_dry_run`
 - `latest_timestamp` (nullable)
 
-### 2.8 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
+### 2.8 `synora config gate-show [--json]` (Phase 3 Gate Visibility Utility)
+
+Purpose:
+- Show current real-mutation gate config snapshot.
+
+Fields:
+- `real_mutation_enabled`
+- `gate_version`
+- `approval_record_ref`
+- `approval_record_present`
+
+Notes:
+- Read-only utility for gate diagnostics.
+- Does not modify system state.
+
+### 2.9 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.

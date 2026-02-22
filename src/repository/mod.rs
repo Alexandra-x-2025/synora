@@ -4,7 +4,7 @@ use std::io;
 use std::path::PathBuf;
 
 use rusqlite::{params, Connection};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::paths::ensure_synora_home;
 
@@ -43,6 +43,7 @@ pub struct ConfigRepository {
 #[derive(Debug, Clone, Default)]
 pub struct ExecutionGateConfig {
     pub real_mutation_enabled: bool,
+    pub gate_version: String,
     pub approval_record_ref: String,
 }
 
@@ -60,26 +61,93 @@ impl ConfigRepository {
         fs::create_dir_all(&root)?;
         let config = root.join("config.json");
         if !config.exists() {
-            let payload = format!(
-                "{{\n  \"log_level\": \"INFO\",\n  \"quarantine_dir\": \"{}\",\n  \"allow_apply_updates\": false,\n  \"execution\": {{\n    \"real_mutation_enabled\": false,\n    \"gate_version\": \"phase3-draft-v1\",\n    \"approval_record_ref\": \"\"\n  }}\n}}\n",
-                root.join("quarantine").display()
-            );
+            let payload = serde_json::to_string_pretty(&json!({
+                "log_level": "INFO",
+                "quarantine_dir": root.join("quarantine").display().to_string(),
+                "allow_apply_updates": false,
+                "execution": {
+                    "real_mutation_enabled": false,
+                    "gate_version": "phase3-draft-v1",
+                    "approval_record_ref": ""
+                }
+            }))
+            .map(|v| format!("{v}\n"))
+            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
             fs::write(&config, payload)?;
         }
 
         Ok(config)
     }
 
+    fn parse_gate_from_text_fallback(content: &str) -> ExecutionGateConfig {
+        let real_mutation_enabled = if let Some(i) = content.find("\"real_mutation_enabled\"") {
+            let tail = &content[i..];
+            if let Some(c) = tail.find(':') {
+                tail[c + 1..].trim_start().starts_with("true")
+            } else {
+                false
+            }
+        } else {
+            false
+        };
+
+        let gate_version = if let Some(i) = content.find("\"gate_version\"") {
+            let tail = &content[i..];
+            if let Some(c) = tail.find(':') {
+                let mut chars = tail[c + 1..].trim_start().chars();
+                if chars.next() == Some('"') {
+                    let rem: String = chars.collect();
+                    rem.split('"').next().unwrap_or("phase3-draft-v1").to_string()
+                } else {
+                    "phase3-draft-v1".to_string()
+                }
+            } else {
+                "phase3-draft-v1".to_string()
+            }
+        } else {
+            "phase3-draft-v1".to_string()
+        };
+
+        let approval_record_ref = if let Some(i) = content.find("\"approval_record_ref\"") {
+            let tail = &content[i..];
+            if let Some(c) = tail.find(':') {
+                let mut chars = tail[c + 1..].trim_start().chars();
+                if chars.next() == Some('"') {
+                    let rem: String = chars.collect();
+                    rem.split('"').next().unwrap_or("").to_string()
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            }
+        } else {
+            String::new()
+        };
+
+        ExecutionGateConfig {
+            real_mutation_enabled,
+            gate_version,
+            approval_record_ref,
+        }
+    }
+
     pub fn load_execution_gate(&self) -> io::Result<ExecutionGateConfig> {
         let root = self.resolve_base_dir()?;
         let config_path = root.join("config.json");
         if !config_path.exists() {
-            return Ok(ExecutionGateConfig::default());
+            return Ok(ExecutionGateConfig {
+                real_mutation_enabled: false,
+                gate_version: "phase3-draft-v1".to_string(),
+                approval_record_ref: String::new(),
+            });
         }
 
         let content = fs::read_to_string(config_path)?;
-        let parsed: Value = serde_json::from_str(&content)
-            .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err.to_string()))?;
+        let parsed: Value = match serde_json::from_str(&content) {
+            Ok(v) => v,
+            Err(_) => return Ok(Self::parse_gate_from_text_fallback(&content)),
+        };
         let execution = parsed
             .get("execution")
             .and_then(|v| v.as_object())
@@ -90,6 +158,11 @@ impl ConfigRepository {
             .get("real_mutation_enabled")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
+        let gate_version = execution
+            .get("gate_version")
+            .and_then(|v| v.as_str())
+            .unwrap_or("phase3-draft-v1")
+            .to_string();
         let approval_record_ref = execution
             .get("approval_record_ref")
             .and_then(|v| v.as_str())
@@ -98,6 +171,7 @@ impl ConfigRepository {
 
         Ok(ExecutionGateConfig {
             real_mutation_enabled,
+            gate_version,
             approval_record_ref,
         })
     }
@@ -410,6 +484,7 @@ mod tests {
             .load_execution_gate()
             .expect("load_execution_gate should succeed");
         assert!(!gate.real_mutation_enabled);
+        assert_eq!(gate.gate_version, "phase3-draft-v1");
         assert!(gate.approval_record_ref.is_empty());
 
         let _ = fs::remove_dir_all(root);
@@ -421,7 +496,7 @@ mod tests {
         fs::create_dir_all(&root).expect("test dir should be created");
         fs::write(
             root.join("config.json"),
-            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+            "{\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"gate_version\": \"phase3-custom\",\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
         )
         .expect("config should be written");
 
@@ -433,6 +508,31 @@ mod tests {
             .load_execution_gate()
             .expect("load_execution_gate should succeed");
         assert!(gate.real_mutation_enabled);
+        assert_eq!(gate.gate_version, "phase3-custom");
+        assert_eq!(gate.approval_record_ref, "docs/security/approval.md");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn load_execution_gate_fallback_parses_legacy_malformed_json() {
+        let root = unique_dir("synora-gate-legacy-config-test");
+        fs::create_dir_all(&root).expect("test dir should be created");
+        fs::write(
+            root.join("config.json"),
+            "{\n  \"quarantine_dir\": \"C:\\dev\\synora\\.synora_custom\\quarantine\",\n  \"execution\": {\n    \"real_mutation_enabled\": true,\n    \"approval_record_ref\": \"docs/security/approval.md\"\n  }\n}\n",
+        )
+        .expect("config should be written");
+
+        let repo = ConfigRepository {
+            base_dir: Some(root.clone()),
+        };
+
+        let gate = repo
+            .load_execution_gate()
+            .expect("load_execution_gate should succeed");
+        assert!(gate.real_mutation_enabled);
+        assert_eq!(gate.gate_version, "phase3-draft-v1");
         assert_eq!(gate.approval_record_ref, "docs/security/approval.md");
 
         let _ = fs::remove_dir_all(root);
