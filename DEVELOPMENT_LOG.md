@@ -251,6 +251,7 @@ Ready to enter CLI development phase.
 - If update probing is unavailable, recommendation still falls back to repository-only scoring
 - Added unit test for score boost behavior under update signal
 - Synced `docs/cli-spec-v0.1.md` to reflect the new signal model
+- Added `source suggest --verbose` text diagnostics for recommendation signal visibility
 
 ### 中文
 

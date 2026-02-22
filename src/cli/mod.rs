@@ -264,10 +264,17 @@ fn handle_source(args: &[String]) -> Result<i32, String> {
         return Ok(EXIT_USAGE);
     }
 
-    let as_json = args.iter().any(|v| v == "--json");
-    if args.len() > 2 || (args.len() == 2 && !as_json) {
-        print_source_help();
-        return Ok(EXIT_USAGE);
+    let mut as_json = false;
+    let mut verbose = false;
+    for opt in args.iter().skip(1) {
+        match opt.as_str() {
+            "--json" => as_json = true,
+            "--verbose" => verbose = true,
+            _ => {
+                print_source_help();
+                return Ok(EXIT_USAGE);
+            }
+        }
     }
 
     let service = SourceSuggestionService::default();
@@ -277,6 +284,9 @@ fn handle_source(args: &[String]) -> Result<i32, String> {
                 print_source_suggestions_json(&items);
             } else {
                 print_source_suggestions_table(&items);
+                if verbose {
+                    print_source_suggestions_verbose_summary(&items);
+                }
             }
             Ok(EXIT_OK)
         }
@@ -404,7 +414,7 @@ fn print_config_help() {
 }
 
 fn print_source_help() {
-    println!("Usage: synora source suggest [--json]");
+    println!("Usage: synora source suggest [--json] [--verbose]");
 }
 
 fn escape_json(input: &str) -> String {
@@ -488,6 +498,19 @@ fn print_source_suggestions_table(items: &[crate::domain::SourceRecommendation])
     }
 }
 
+fn print_source_suggestions_verbose_summary(items: &[crate::domain::SourceRecommendation]) {
+    let update_signal_hits = items
+        .iter()
+        .filter(|item| item.reasons.iter().any(|r| r.contains("update_detected")))
+        .count();
+    let high_confidence = items.iter().filter(|item| item.score >= 90).count();
+
+    println!("recommendation_count: {}", items.len());
+    println!("update_signal_hits: {update_signal_hits}");
+    println!("high_confidence_count: {high_confidence}");
+    println!("signal_mode: db_plus_update_check_best_effort");
+}
+
 #[cfg(test)]
 mod tests {
     use super::{dispatch, map_integration_error, EXIT_INTEGRATION, EXIT_OK, EXIT_SECURITY, EXIT_USAGE};
@@ -544,6 +567,13 @@ mod tests {
         let code = dispatch(&args(&["source", "suggest", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn source_suggest_verbose_returns_ok() {
+        let code = dispatch(&args(&["source", "suggest", "--verbose"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
     }
 
     #[test]

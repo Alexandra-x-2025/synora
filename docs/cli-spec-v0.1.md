@@ -106,7 +106,7 @@ Notes:
 - Read-only helper for repository visibility validation.
 - Does not modify system state.
 
-### 2.6 `synora source suggest [--json]` (Phase 2 Week 2 Prototype)
+### 2.6 `synora source suggest [--json] [--verbose]` (Phase 2 Week 2 Prototype)
 
 Purpose:
 - Generate source recommendation candidates from persisted software snapshot.
@@ -115,6 +115,7 @@ Purpose:
 Output:
 - Default: table with score and reasons
 - `--json`: structured recommendation array
+- `--verbose` (text mode): print signal summary (`recommendation_count`, `update_signal_hits`, `high_confidence_count`, `signal_mode`)
 
 ## 3. Global Behavior
 
