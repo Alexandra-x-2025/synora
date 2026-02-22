@@ -1,4 +1,4 @@
-use crate::domain::{SoftwareItem, SourceRecommendation, UpdateItem, UpdatePlan};
+use crate::domain::{CleanupPlan, SoftwareItem, SourceRecommendation, UpdateItem, UpdatePlan};
 use crate::integration::{IntegrationError, ParsePath, WingetClient};
 use crate::repository::DatabaseRepository;
 use crate::security::SecurityGuard;
@@ -121,6 +121,85 @@ impl UpdateService {
 }
 
 #[derive(Default, Clone)]
+pub struct CleanupService {
+    repo: DatabaseRepository,
+}
+
+impl CleanupService {
+    pub fn plan_quarantine(
+        &self,
+        package_id: &str,
+        confirmed: bool,
+        dry_run: bool,
+    ) -> Result<CleanupPlan, String> {
+        if package_id.trim().is_empty() {
+            return Err("package_id is required".to_string());
+        }
+
+        let requested_mode = if confirmed {
+            "confirm"
+        } else if dry_run {
+            "dry-run"
+        } else {
+            "dry-run"
+        };
+        let mode = if confirmed {
+            "confirmed-execution"
+        } else {
+            "plan-only"
+        };
+        let status = if confirmed {
+            "quarantine_confirmed"
+        } else {
+            "quarantine_planned"
+        };
+        let ts = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|v| v.as_secs())
+            .unwrap_or(0);
+        let op_id = format!(
+            "cleanup-{}-{}",
+            ts,
+            package_id
+                .chars()
+                .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+                .collect::<String>()
+        );
+
+        Ok(CleanupPlan {
+            operation_id: op_id,
+            package_id: package_id.to_string(),
+            requested_mode: requested_mode.to_string(),
+            mode: mode.to_string(),
+            status: status.to_string(),
+            rollback_attempted: false,
+            rollback_status: "not_needed".to_string(),
+            message: "phase3 m1: dry-run audit only, no real mutation".to_string(),
+        })
+    }
+
+    pub fn persist_cleanup_plan(
+        &self,
+        plan: &CleanupPlan,
+    ) -> Result<(), crate::repository::RepositoryError> {
+        let software_id = self.repo.upsert_software(
+            &plan.package_id,
+            "unknown",
+            "cleanup_plan",
+            "",
+            "unknown",
+        )?;
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|v| v.as_secs() as i64)
+            .unwrap_or(0);
+        self.repo
+            .log_update(software_id, "unknown", "unknown", timestamp, &plan.status)?;
+        Ok(())
+    }
+}
+
+#[derive(Default, Clone)]
 pub struct SourceSuggestionService {
     repo: DatabaseRepository,
     software: SoftwareService,
@@ -231,7 +310,7 @@ fn score_recommendation(
 
 #[cfg(test)]
 mod tests {
-    use super::{score_recommendation, UpdateService};
+    use super::{score_recommendation, CleanupService, UpdateService};
     use crate::repository::DatabaseRepository;
     use rusqlite::Connection;
     use std::fs;
@@ -306,6 +385,36 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM quarantine", [], |row| row.get(0))
             .expect("quarantine count query should succeed");
         assert_eq!(quarantine_count, 1);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn persist_cleanup_dry_run_writes_quarantine_planned_status() {
+        let root = unique_dir("synora-cleanup-plan-test");
+        let db_path = root.join("db").join("synora.db");
+        let service = CleanupService {
+            repo: DatabaseRepository {
+                db_path: Some(db_path.clone()),
+            },
+        };
+
+        let plan = service
+            .plan_quarantine("Git.Git", false, true)
+            .expect("plan_quarantine should succeed");
+        service
+            .persist_cleanup_plan(&plan)
+            .expect("persist_cleanup_plan should succeed");
+
+        let conn = Connection::open(db_path).expect("db should open");
+        let count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM update_history WHERE status = 'quarantine_planned'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("count query should succeed");
+        assert_eq!(count, 1);
 
         let _ = fs::remove_dir_all(root);
     }

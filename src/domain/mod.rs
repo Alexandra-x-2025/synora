@@ -34,3 +34,15 @@ pub struct SourceRecommendation {
     pub score: u8,
     pub reasons: Vec<String>,
 }
+
+#[derive(Debug, Clone)]
+pub struct CleanupPlan {
+    pub operation_id: String,
+    pub package_id: String,
+    pub requested_mode: String,
+    pub mode: String,
+    pub status: String,
+    pub rollback_attempted: bool,
+    pub rollback_status: String,
+    pub message: String,
+}

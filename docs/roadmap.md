@@ -123,6 +123,8 @@ Kickoff update:
 - Added module-level implementation workplan:
 - `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
 - Defined service/repository/security/integration/cli execution order and milestones
+- M1 implementation started:
+- `cleanup quarantine` CLI skeleton + dry-run audit persistence (`quarantine_planned`)
 
 ---
 
@@ -145,3 +147,5 @@ Kickoff update:
 - 已新增模块级实施任务分解：
 - `docs/architecture/Synora_Cleanup_Quarantine_Implementation_Workplan.md`
 - 明确了 service/repository/security/integration/cli 的执行顺序与里程碑
+- 已启动 M1 实现：
+- `cleanup quarantine` CLI 骨架与 dry-run 审计持久化（`quarantine_planned`）

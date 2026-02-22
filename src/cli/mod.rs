@@ -2,7 +2,7 @@ use crate::integration::{IntegrationError, ParsePath};
 use crate::logging::log_event;
 use crate::repository::{ConfigRepository, DatabaseRepository};
 use crate::security::SecurityError;
-use crate::service::{SoftwareService, SourceSuggestionService, UpdateService};
+use crate::service::{CleanupService, SoftwareService, SourceSuggestionService, UpdateService};
 
 pub const EXIT_OK: i32 = 0;
 pub const EXIT_USAGE: i32 = 2;
@@ -34,6 +34,7 @@ fn dispatch(args: &[String]) -> Result<i32, String> {
     match args[0].as_str() {
         "software" => handle_software(&args[1..]),
         "update" => handle_update(&args[1..]),
+        "cleanup" => handle_cleanup(&args[1..]),
         "config" => handle_config(&args[1..]),
         "source" => handle_source(&args[1..]),
         "-h" | "--help" => {
@@ -199,6 +200,105 @@ fn handle_update(args: &[String]) -> Result<i32, String> {
             Ok(EXIT_USAGE)
         }
     }
+}
+
+fn handle_cleanup(args: &[String]) -> Result<i32, String> {
+    if args.is_empty() || args[0] != "quarantine" {
+        print_cleanup_help();
+        return Ok(EXIT_USAGE);
+    }
+
+    let mut package_id: Option<String> = None;
+    let mut dry_run = false;
+    let mut confirmed = false;
+    let mut as_json = false;
+    let mut verbose = false;
+
+    let mut idx = 1usize;
+    while idx < args.len() {
+        match args[idx].as_str() {
+            "--id" => {
+                if idx + 1 >= args.len() {
+                    eprintln!("Validation error: --id requires a value");
+                    return Ok(EXIT_USAGE);
+                }
+                package_id = Some(args[idx + 1].clone());
+                idx += 2;
+            }
+            "--dry-run" => {
+                if confirmed {
+                    eprintln!("Validation error: --dry-run cannot be used with --confirm");
+                    return Ok(EXIT_USAGE);
+                }
+                dry_run = true;
+                idx += 1;
+            }
+            "--confirm" => {
+                if dry_run {
+                    eprintln!("Validation error: --confirm cannot be used with --dry-run");
+                    return Ok(EXIT_USAGE);
+                }
+                confirmed = true;
+                idx += 1;
+            }
+            "--json" => {
+                as_json = true;
+                idx += 1;
+            }
+            "--verbose" => {
+                verbose = true;
+                idx += 1;
+            }
+            _ => {
+                eprintln!("Validation error: unknown option '{}'", args[idx]);
+                return Ok(EXIT_USAGE);
+            }
+        }
+    }
+
+    let Some(package_id) = package_id else {
+        eprintln!("Validation error: --id is required");
+        return Ok(EXIT_USAGE);
+    };
+
+    let service = CleanupService::default();
+    let plan = match service.plan_quarantine(&package_id, confirmed, dry_run) {
+        Ok(plan) => plan,
+        Err(msg) => {
+            eprintln!("Validation error: {msg}");
+            return Ok(EXIT_USAGE);
+        }
+    };
+    if let Err(err) = service.persist_cleanup_plan(&plan) {
+        eprintln!("Integration failure: failed to persist cleanup plan: {err}");
+        return Ok(EXIT_INTEGRATION);
+    }
+
+    if as_json {
+        println!(
+            "{{\n  \"operation_id\": \"{}\",\n  \"package_id\": \"{}\",\n  \"requested_mode\": \"{}\",\n  \"mode\": \"{}\",\n  \"status\": \"{}\",\n  \"rollback_attempted\": {},\n  \"rollback_status\": \"{}\",\n  \"message\": \"{}\"\n}}",
+            escape_json(&plan.operation_id),
+            escape_json(&plan.package_id),
+            escape_json(&plan.requested_mode),
+            escape_json(&plan.mode),
+            escape_json(&plan.status),
+            plan.rollback_attempted,
+            escape_json(&plan.rollback_status),
+            escape_json(&plan.message),
+        );
+    } else {
+        println!("operation_id: {}", plan.operation_id);
+        println!("package_id: {}", plan.package_id);
+        println!("status: {}", plan.status);
+        println!("rollback_status: {}", plan.rollback_status);
+        println!("message: {}", plan.message);
+        if verbose {
+            println!("mutation_boundary_reached: false");
+            println!("audit_rows_written: 1");
+        }
+    }
+
+    Ok(EXIT_OK)
 }
 
 fn handle_config(args: &[String]) -> Result<i32, String> {
@@ -449,7 +549,7 @@ fn print_update_table(items: &[crate::domain::UpdateItem]) {
 
 fn print_help() {
     println!("Synora CLI v0.1");
-    println!("Usage: synora <software|update|config|source> <subcommand> [options]");
+    println!("Usage: synora <software|update|cleanup|config|source> <subcommand> [options]");
     println!("Try: synora software list --json");
 }
 
@@ -460,6 +560,12 @@ fn print_software_help() {
 fn print_update_help() {
     println!("Usage: synora update check [--json] [--verbose]");
     println!("   or: synora update apply --id <package_id> [--dry-run|--confirm|--yes] [--json]");
+}
+
+fn print_cleanup_help() {
+    println!(
+        "Usage: synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]"
+    );
 }
 
 fn print_config_help() {
@@ -702,6 +808,41 @@ mod tests {
         let code = dispatch(&args(&["config", "audit-summary", "--bad-flag"]))
             .expect("dispatch should return exit code");
         assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn cleanup_quarantine_missing_id_returns_usage() {
+        let code = dispatch(&args(&["cleanup", "quarantine", "--dry-run"]))
+            .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn cleanup_quarantine_conflicting_flags_returns_usage() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--dry-run",
+            "--confirm",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_USAGE);
+    }
+
+    #[test]
+    fn cleanup_quarantine_dry_run_json_returns_ok() {
+        let code = dispatch(&args(&[
+            "cleanup",
+            "quarantine",
+            "--id",
+            "Git.Git",
+            "--dry-run",
+            "--json",
+        ]))
+        .expect("dispatch should return exit code");
+        assert_eq!(code, EXIT_OK);
     }
 
     #[test]

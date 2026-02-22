@@ -21,6 +21,7 @@ Quick regression checks for CLI contract and integration behavior.
 11. `cargo run -- config history-list --json`
 12. `cargo run -- config audit-summary --json`
 13. `cargo run -- source suggest --json`
+14. `cargo run -- cleanup quarantine --id Git.Git --dry-run --json`
 
 ## Expected Outcomes
 
@@ -37,3 +38,4 @@ Quick regression checks for CLI contract and integration behavior.
 11. Returns JSON array of persisted update history records (can be empty).
 12. Returns JSON object with audit aggregates (`total`, `planned_confirmed`, `planned_dry_run`, `latest_timestamp`).
 13. Returns JSON array of source recommendations (can be empty).
+14. Returns JSON object for cleanup dry-run with `status: "quarantine_planned"` and rollback fields.

@@ -802,3 +802,25 @@ Examples:
 - Security
 - Integration
 - 定义里程碑顺序（M1-M4）与完成标准
+
+---
+
+## 2026-02-22 – Phase 3 M1: Cleanup Quarantine CLI Skeleton
+
+### English
+
+- Added runtime command path:
+- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- Implemented M1 behavior:
+- dry-run audit persistence with `update_history.status = quarantine_planned`
+- Added service-layer cleanup plan object and persistence helper
+- Added CLI contract tests for missing id, conflicting flags, and dry-run JSON success
+
+### 中文
+
+- 新增运行时命令路径：
+- `synora cleanup quarantine --id <package_id> [--dry-run|--confirm] [--json] [--verbose]`
+- 完成 M1 行为：
+- dry-run 审计持久化（`update_history.status = quarantine_planned`）
+- 新增 service 层 cleanup 计划对象与持久化辅助逻辑
+- 增加 CLI 契约测试：缺失 id、参数冲突、dry-run JSON 成功路径
