@@ -738,3 +738,21 @@ Examples:
 - 定义了未来 quarantine 实执行契约
 - 定义了变更边界与回滚语义
 - 定义了审计持久化所需状态词汇
+
+---
+
+## 2026-02-22 – Phase 3 Gate Setup: Status Mapping & Implementation Checklist
+
+### English
+
+- Added explicit `update_history.status` mapping table in quarantine design draft
+- Added Phase 3 implementation gate checklist:
+- `docs/testing/Phase3_Quarantine_Implementation_Gate.md`
+- Synced database ER document with active/reserved status vocabulary
+
+### 中文
+
+- 在 quarantine 设计草案中补充 `update_history.status` 映射表
+- 新增 Phase 3 实施前门禁清单：
+- `docs/testing/Phase3_Quarantine_Implementation_Gate.md`
+- 同步数据库 ER 文档的已实现/预留状态词汇

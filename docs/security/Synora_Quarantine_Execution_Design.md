@@ -84,6 +84,19 @@ Planned status vocabulary:
 - `quarantine_rollback_success`
 - `quarantine_rollback_failed`
 
+Status mapping into existing `update_history.status`:
+
+| Category | Status Value | Source | Notes |
+| --- | --- | --- | --- |
+| Update Plan | `planned_dry_run` | Existing | v0.1 `update apply --dry-run` |
+| Update Plan | `planned_confirmed` | Existing | v0.1 `update apply --confirm/--yes` |
+| Quarantine Plan | `quarantine_planned` | Reserved | Phase 3 dry-run write path |
+| Quarantine Confirm | `quarantine_confirmed` | Reserved | Phase 3 confirmed execution start |
+| Quarantine Result | `quarantine_success` | Reserved | Mutation completed successfully |
+| Quarantine Result | `quarantine_failed` | Reserved | Mutation failed |
+| Rollback Result | `quarantine_rollback_success` | Reserved | Rollback completed |
+| Rollback Result | `quarantine_rollback_failed` | Reserved | Rollback failed, requires operator attention |
+
 ---
 
 ## 6. Security Boundaries / 安全边界

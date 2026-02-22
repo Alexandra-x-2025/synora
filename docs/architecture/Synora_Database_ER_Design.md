@@ -30,3 +30,19 @@ software 1:N update_history software 1:N quarantine
 -   All updates logged.
 -   Cleanup must reference software_id.
 -   Registry deletion requires backup entry.
+
+------------------------------------------------------------------------
+
+## update_history Status Vocabulary / 状态词汇
+
+Active (implemented):
+- `planned_dry_run`
+- `planned_confirmed`
+
+Reserved (Phase 3 quarantine lifecycle):
+- `quarantine_planned`
+- `quarantine_confirmed`
+- `quarantine_success`
+- `quarantine_failed`
+- `quarantine_rollback_success`
+- `quarantine_rollback_failed`
