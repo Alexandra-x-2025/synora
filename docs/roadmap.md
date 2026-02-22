@@ -131,6 +131,9 @@ Kickoff update:
 - confirmed path now records simulated execution success (`quarantine_success`) and marks mutation boundary reached
 - M4 implementation started:
 - simulated failure + rollback status persistence (`quarantine_failed`, `quarantine_rollback_success|failed`) and exit `4` mapping for failed operations
+- Gate review decision recorded:
+- Go for simulation path
+- No-Go for real mutation path until security controls are signed off
 
 ---
 
@@ -161,3 +164,6 @@ Kickoff update:
 - confirmed 路径记录模拟执行成功（`quarantine_success`），并标记已到达变更边界
 - 已启动 M4 实现：
 - 模拟失败与回滚状态持久化（`quarantine_failed`、`quarantine_rollback_success|failed`），并将失败操作映射为退出码 `4`
+- 已记录 Gate 评审结论：
+- 模拟路径 Go
+- 真实变更路径 No-Go（需安全控制签署）
