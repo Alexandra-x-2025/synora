@@ -98,6 +98,24 @@ impl UpdateService {
 
         self.repo
             .log_update(software_id, "unknown", "unknown", timestamp, status)?;
+
+        if plan.confirmed {
+            // v0.1 keeps these as audit placeholders; no real system mutation occurs.
+            self.repo.add_registry_backup(
+                "HKLM",
+                &format!("Software\\Synora\\Plan\\{}", plan.package_id),
+                "{\"mode\":\"planned_confirmed_placeholder\"}",
+                timestamp,
+            )?;
+            self.repo.add_quarantine_entry(
+                software_id,
+                &format!("planned://{}", plan.package_id),
+                "N/A",
+                timestamp,
+                "planned_confirmed_safety_placeholder",
+            )?;
+        }
+
         Ok(())
     }
 }
@@ -278,6 +296,16 @@ mod tests {
             )
             .expect("count query should succeed");
         assert_eq!(count, 1);
+
+        let backup_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM registry_backup", [], |row| row.get(0))
+            .expect("backup count query should succeed");
+        assert_eq!(backup_count, 1);
+
+        let quarantine_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM quarantine", [], |row| row.get(0))
+            .expect("quarantine count query should succeed");
+        assert_eq!(quarantine_count, 1);
 
         let _ = fs::remove_dir_all(root);
     }

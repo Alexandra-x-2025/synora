@@ -76,6 +76,9 @@ Behavior:
 - Each successful plan is persisted into SQLite `update_history` as audit record:
 - `planned_dry_run` when unconfirmed
 - `planned_confirmed` when `--confirm`/`--yes` is used
+- For confirmed plans, v0.1 also writes safety placeholder audit rows into:
+- `registry_backup`
+- `quarantine`
 
 JSON contract (minimum keys):
 - `package_id`

@@ -58,6 +58,7 @@ Rules:
 - Each successful plan must persist an audit event in `update_history`:
 - `planned_dry_run` for unconfirmed plans
 - `planned_confirmed` for confirmed plans
+- Confirmed plans also persist placeholder safety audit rows in `registry_backup` and `quarantine` tables.
 
 JSON minimum fields:
 - `package_id`
