@@ -43,13 +43,21 @@
         <input id="queryInput" type="text" value="PowerToys" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-teal-600" />
         <button id="liveSearchBtn" class="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">实时搜索</button>
       </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="quick-query rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs text-stone-700" data-query="PowerToys">PowerToys</button>
+        <button class="quick-query rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs text-stone-700" data-query="Visual Studio Code">Visual Studio Code</button>
+        <button class="quick-query rounded-full border border-stone-300 bg-white px-2.5 py-1 text-xs text-stone-700" data-query="Git">Git</button>
+      </div>
       <p id="liveSearchMeta" class="mt-1 text-sm text-stone-500"></p>
     </section>
 
     <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/80 p-3.5 shadow-sm ring-1 ring-zinc-200">
       <div class="mb-2.5 flex items-center justify-between gap-2">
         <h2 id="groupTitle" class="m-0 text-base font-semibold">结果分组</h2>
-        <span id="resultMeta" class="text-sm text-stone-500"></span>
+        <div class="flex items-center gap-2">
+          <button id="toggleFilterBtn" class="rounded-md border border-stone-300 bg-white px-2 py-1 text-xs text-stone-700">筛选</button>
+          <span id="resultMeta" class="text-sm text-stone-500"></span>
+        </div>
       </div>
       <div class="mb-3 hidden flex-wrap items-end gap-2" id="filterBar">
         <label id="riskLabel" class="text-xs text-stone-600">
@@ -74,6 +82,7 @@
         </label>
       </div>
       <div id="groupsRoot" class="grid gap-3"></div>
+      <p id="emptyState" class="hidden rounded-lg border border-dashed border-stone-300 bg-white px-3 py-6 text-center text-sm text-stone-500"></p>
     </section>
 
     <details class="rounded-xl border border-stone-300 bg-white/70 p-3.5 shadow-sm">

@@ -5,10 +5,13 @@ const searchCmdOut = document.getElementById("searchCmdOut");
 const liveSearchMeta = document.getElementById("liveSearchMeta");
 const riskFilter = document.getElementById("riskFilter");
 const groupFilter = document.getElementById("groupFilter");
+const filterBar = document.getElementById("filterBar");
+const toggleFilterBtn = document.getElementById("toggleFilterBtn");
 const payloadInput = document.getElementById("payloadInput");
 const renderBtn = document.getElementById("renderBtn");
 const payloadErr = document.getElementById("payloadErr");
 const groupsRoot = document.getElementById("groupsRoot");
+const emptyState = document.getElementById("emptyState");
 const resultMeta = document.getElementById("resultMeta");
 const actionCmdOut = document.getElementById("actionCmdOut");
 const runActionBtn = document.getElementById("runActionBtn");
@@ -18,6 +21,7 @@ const historyRoot = document.getElementById("historyRoot");
 const langZhBtn = document.getElementById("langZhBtn");
 const langEnBtn = document.getElementById("langEnBtn");
 const advancedTitle = document.getElementById("advancedTitle");
+const quickQueryButtons = document.querySelectorAll(".quick-query");
 
 const HISTORY_KEY = "synora_ui_cmd_history_v1";
 const HISTORY_MAX = 12;
@@ -89,7 +93,10 @@ const I18N = {
       copyFailed: "复制失败。",
       noCopyContent: "没有可复制的命令。",
       invalidJson: "JSON 无效：{msg}",
-      resultMeta: "关键词=\"{query}\" | 分组={count}"
+      resultMeta: "关键词=\"{query}\" | 分组={count}",
+      resultLoading: "正在加载结果...",
+      resultEmpty: "没有找到匹配结果，换个关键词试试。",
+      filters: "筛选"
     },
     labels: {
       risk: "风险",
@@ -162,7 +169,10 @@ const I18N = {
       copyFailed: "Copy failed.",
       noCopyContent: "No command to copy.",
       invalidJson: "Invalid JSON: {msg}",
-      resultMeta: "query=\"{query}\" | groups={count}"
+      resultMeta: "query=\"{query}\" | groups={count}",
+      resultLoading: "Loading results...",
+      resultEmpty: "No matching results. Try another query.",
+      filters: "Filters"
     },
     labels: {
       risk: "risk",
@@ -261,6 +271,7 @@ function applyLanguage() {
   setText("copyActionBtn", dict.copyActionBtn);
   setText("historyTitle", dict.historyTitle);
   setText("advancedTitle", dict.advancedTitle);
+  setText("toggleFilterBtn", dict.prompts.filters);
 
   queryInput.placeholder = dict.queryPlaceholder;
   payloadInput.placeholder = dict.payloadPlaceholder;
@@ -332,14 +343,21 @@ function makeSearchCmd(record = true) {
   if (record) pushHistory(cmd);
 }
 
+function setSearchLoading(isLoading) {
+  liveSearchBtn.disabled = isLoading;
+  liveSearchBtn.classList.toggle("opacity-60", isLoading);
+  liveSearchBtn.classList.toggle("cursor-not-allowed", isLoading);
+}
+
 async function runLiveSearch() {
   const q = queryInput.value.trim();
   if (!q) {
     liveSearchMeta.textContent = t().prompts.enterQuery;
     return;
   }
+  setSearchLoading(true);
+  liveSearchMeta.textContent = t().prompts.resultLoading;
   makeSearchCmd(false);
-  liveSearchMeta.textContent = t().prompts.searching;
   try {
     const url = `/api/search?q=${encodeURIComponent(q)}`;
     const res = await fetch(url);
@@ -363,6 +381,8 @@ async function runLiveSearch() {
     liveSearchMeta.textContent = fmt(t().prompts.liveOk, { groups });
   } catch (e) {
     liveSearchMeta.textContent = fmt(t().prompts.liveException, { msg: e.message });
+  } finally {
+    setSearchLoading(false);
   }
 }
 
@@ -479,10 +499,18 @@ function render(payload) {
     .filter((g) => g.items.length > 0);
 
   groupsRoot.innerHTML = "";
+  emptyState.classList.add("hidden");
+  emptyState.textContent = "";
   resultMeta.textContent = fmt(t().prompts.resultMeta, {
     query: payload.query || "",
     count: filteredGroups.length
   });
+
+  if (!filteredGroups.length) {
+    emptyState.textContent = t().prompts.resultEmpty;
+    emptyState.classList.remove("hidden");
+    return;
+  }
 
   filteredGroups.forEach((group) => {
     const wrap = document.createElement("section");
@@ -592,6 +620,18 @@ searchCmdBtn.addEventListener("click", makeSearchCmd);
 liveSearchBtn.addEventListener("click", runLiveSearch);
 riskFilter.addEventListener("change", () => currentPayload && render(currentPayload));
 groupFilter.addEventListener("change", () => currentPayload && render(currentPayload));
+toggleFilterBtn.addEventListener("click", () => {
+  filterBar.classList.toggle("hidden");
+});
+queryInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") runLiveSearch();
+});
+quickQueryButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    queryInput.value = btn.dataset.query || "";
+    runLiveSearch();
+  });
+});
 renderBtn.addEventListener("click", () => {
   payloadErr.textContent = "";
   let parsed;
