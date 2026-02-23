@@ -51,11 +51,15 @@ Synora 是一个本地优先、AI 驱动的软件操作系统管理器，目标�
 本地打开方式（任选其一）：
 1. 直接打开 `ui/index.html`
 2. 在仓库根目录执行 `python -m http.server 8080`，然后访问 `http://localhost:8080/ui/`
+3. Live 模式（可直接调用 CLI）：
+   - `python scripts/ui_dev_server.py`
+   - 访问 `http://127.0.0.1:8787/`
 
 使用方式：
 1. 在页面输入查询，生成 `ui search` 命令。
 2. 将 `cargo run -- ui search --q "<query>" --json` 的输出粘贴到页面中。
 3. 点击结果卡片，页面会生成对应 `ui action-run` 命令（高风险自动带 `--confirm`）。
+4. 在 Live 模式下，可直接点击 `Live Search` 与 `Run Action via API`。
 
 ## 当前可用命令矩阵
 - `config`

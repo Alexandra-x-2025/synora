@@ -38,8 +38,10 @@
       <div class="flex flex-col gap-2 sm:flex-row">
         <input id="queryInput" type="text" value="PowerToys" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-teal-600" />
         <button id="searchCmdBtn" class="rounded-lg bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Build Search Command</button>
+        <button id="liveSearchBtn" class="rounded-lg bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Live Search</button>
       </div>
       <p id="searchCmdOut" class="mt-2 min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+      <p id="liveSearchMeta" class="mt-1 text-sm text-stone-500"></p>
     </section>
 
     <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-orange-100">
@@ -63,6 +65,10 @@
       <h2 class="m-0 text-base font-semibold">Action Command</h2>
       <p class="mb-2 mt-1 text-sm text-stone-500">Click any result card to generate a command.</p>
       <p id="actionCmdOut" class="min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button id="runActionBtn" class="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Run Action via API</button>
+        <span id="actionRunMeta" class="text-sm text-stone-500"></span>
+      </div>
     </section>
   </main>
 

@@ -1,12 +1,16 @@
 const queryInput = document.getElementById("queryInput");
 const searchCmdBtn = document.getElementById("searchCmdBtn");
+const liveSearchBtn = document.getElementById("liveSearchBtn");
 const searchCmdOut = document.getElementById("searchCmdOut");
+const liveSearchMeta = document.getElementById("liveSearchMeta");
 const payloadInput = document.getElementById("payloadInput");
 const renderBtn = document.getElementById("renderBtn");
 const payloadErr = document.getElementById("payloadErr");
 const groupsRoot = document.getElementById("groupsRoot");
 const resultMeta = document.getElementById("resultMeta");
 const actionCmdOut = document.getElementById("actionCmdOut");
+const runActionBtn = document.getElementById("runActionBtn");
+const actionRunMeta = document.getElementById("actionRunMeta");
 
 const examplePayload = {
   query: "PowerToys",
@@ -59,6 +63,30 @@ function makeSearchCmd() {
   searchCmdOut.textContent = `cargo run -- ui search --q "${q.replaceAll('"', '\\"')}" --json`;
 }
 
+async function runLiveSearch() {
+  const q = queryInput.value.trim();
+  if (!q) {
+    liveSearchMeta.textContent = "Query is required.";
+    return;
+  }
+  liveSearchMeta.textContent = "Searching...";
+  try {
+    const url = `/api/search?q=${encodeURIComponent(q)}`;
+    const res = await fetch(url);
+    const payload = await res.json();
+    if (!res.ok) {
+      liveSearchMeta.textContent = payload.error || "Live search failed.";
+      return;
+    }
+    payloadInput.value = JSON.stringify(payload, null, 2);
+    render(payload);
+    const groups = Array.isArray(payload.groups) ? payload.groups.length : 0;
+    liveSearchMeta.textContent = `Live search ok: groups=${groups}`;
+  } catch (e) {
+    liveSearchMeta.textContent = `Live search error: ${e.message}`;
+  }
+}
+
 function riskChipClass(risk) {
   if (risk === "high") return "text-red-800 border-red-300 bg-red-50";
   if (risk === "medium") return "text-amber-800 border-amber-300 bg-amber-50";
@@ -71,6 +99,38 @@ function makeActionCmd(actionId, risk) {
     return `cargo run -- ui action-run --id "${actionId}" --confirm --json`;
   }
   return `cargo run -- ui action-run --id "${actionId}" --json`;
+}
+
+async function runActionViaApi() {
+  const cmd = actionCmdOut.textContent.trim();
+  if (!cmd) {
+    actionRunMeta.textContent = "No action command selected.";
+    return;
+  }
+  const match = cmd.match(/--id "([^"]+)"/);
+  if (!match) {
+    actionRunMeta.textContent = "Cannot parse action id from command.";
+    return;
+  }
+  const actionId = match[1];
+  const confirm = cmd.includes("--confirm");
+  actionRunMeta.textContent = "Running...";
+  try {
+    const res = await fetch("/api/action-run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: actionId, confirm })
+    });
+    const payload = await res.json();
+    if (!payload.ok) {
+      const code = payload.exit_code ?? "?";
+      actionRunMeta.textContent = `Action failed (exit ${code})`;
+      return;
+    }
+    actionRunMeta.textContent = "Action executed.";
+  } catch (e) {
+    actionRunMeta.textContent = `Action error: ${e.message}`;
+  }
 }
 
 function render(payload) {
@@ -135,6 +195,7 @@ function render(payload) {
 }
 
 searchCmdBtn.addEventListener("click", makeSearchCmd);
+liveSearchBtn.addEventListener("click", runLiveSearch);
 renderBtn.addEventListener("click", () => {
   payloadErr.textContent = "";
   let parsed;
@@ -146,6 +207,7 @@ renderBtn.addEventListener("click", () => {
   }
   render(parsed);
 });
+runActionBtn.addEventListener("click", runActionViaApi);
 
 payloadInput.value = JSON.stringify(examplePayload, null, 2);
 makeSearchCmd();
