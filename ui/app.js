@@ -73,7 +73,20 @@ async function runLiveSearch() {
   try {
     const url = `/api/search?q=${encodeURIComponent(q)}`;
     const res = await fetch(url);
-    const payload = await res.json();
+    const raw = await res.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch (_e) {
+      const looksHtml = raw.trim().startsWith("<!DOCTYPE") || raw.trim().startsWith("<html");
+      if (looksHtml) {
+        liveSearchMeta.textContent =
+          "Live search endpoint returned HTML. Use: python scripts/ui_dev_server.py and open http://127.0.0.1:8787/";
+      } else {
+        liveSearchMeta.textContent = "Live search returned non-JSON response.";
+      }
+      return;
+    }
     if (!res.ok) {
       liveSearchMeta.textContent = payload.error || "Live search failed.";
       return;
@@ -121,7 +134,17 @@ async function runActionViaApi() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: actionId, confirm })
     });
-    const payload = await res.json();
+    const raw = await res.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch (_e) {
+      const looksHtml = raw.trim().startsWith("<!DOCTYPE") || raw.trim().startsWith("<html");
+      actionRunMeta.textContent = looksHtml
+        ? "Action API returned HTML. Start ui_dev_server.py first."
+        : "Action API returned non-JSON response.";
+      return;
+    }
     if (!payload.ok) {
       const code = payload.exit_code ?? "?";
       actionRunMeta.textContent = `Action failed (exit ${code})`;
