@@ -159,6 +159,7 @@ enum JobCommand {
     DeadletterList(JobDeadletterListArgs),
     ReplayDeadletter(JobReplayDeadletterArgs),
     WorkerRun(JobWorkerRunArgs),
+    SchedulerRun(JobSchedulerRunArgs),
 }
 
 #[derive(Debug, Subcommand)]
@@ -585,6 +586,14 @@ struct JobWorkerRunArgs {
 }
 
 #[derive(Debug, Clone, Args)]
+struct JobSchedulerRunArgs {
+    #[arg(long)]
+    limit: Option<u32>,
+    #[arg(long)]
+    json: bool,
+}
+
+#[derive(Debug, Clone, Args)]
 struct RepoListArgs {
     #[arg(long)]
     limit: Option<u32>,
@@ -839,6 +848,7 @@ fn handle_job(command: JobCommand) -> Result<(), CliError> {
         JobCommand::DeadletterList(args) => job_deadletter_list(args),
         JobCommand::ReplayDeadletter(args) => job_replay_deadletter(args),
         JobCommand::WorkerRun(args) => job_worker_run(args),
+        JobCommand::SchedulerRun(args) => job_scheduler_run(args),
     }
 }
 
@@ -3165,6 +3175,13 @@ fn validate_job_worker_run_args(args: &JobWorkerRunArgs) -> Result<(), CliError>
     Ok(())
 }
 
+fn validate_job_scheduler_run_limit(limit: i64) -> Result<(), CliError> {
+    if limit <= 0 {
+        return Err(CliError::Usage("--limit must be >= 1".to_string()));
+    }
+    Ok(())
+}
+
 fn compute_worker_retry_schedule(
     ok: bool,
     deadlettered: bool,
@@ -3293,7 +3310,7 @@ fn job_worker_run(args: JobWorkerRunArgs) -> Result<(), CliError> {
     } else if attempt_after >= job.max_attempts {
         ("deadletter", true, message.clone())
     } else {
-        ("queued", false, message.clone())
+        ("retrying", false, message.clone())
     };
     let (backoff_seconds, next_scheduled_at) = compute_worker_retry_schedule(
         ok,
@@ -3343,6 +3360,44 @@ fn job_worker_run(args: JobWorkerRunArgs) -> Result<(), CliError> {
         "error": if ok { "" } else { message.as_str() }
     });
     print_payload(args.json, payload, "Worker run finished.")
+}
+
+fn job_scheduler_run(args: JobSchedulerRunArgs) -> Result<(), CliError> {
+    let limit = i64::from(args.limit.unwrap_or(50));
+    validate_job_scheduler_run_limit(limit)?;
+
+    let db_file = db_path()?;
+    init_db(&db_file)?;
+    let conn = Connection::open(db_file)?;
+    let now = unix_ts();
+
+    let mut stmt = conn.prepare(
+        r#"
+        SELECT id
+        FROM job_queue
+        WHERE status = 'retrying' AND scheduled_at <= ?1
+        ORDER BY scheduled_at ASC, id ASC
+        LIMIT ?2
+        "#,
+    )?;
+    let rows = stmt.query_map(params![now, limit], |row| row.get::<_, i64>(0))?;
+    let targets = rows.collect::<Result<Vec<_>, _>>()?;
+
+    let mut updated = 0_i64;
+    for id in &targets {
+        updated += conn.execute(
+            "UPDATE job_queue SET status='queued' WHERE id = ?1 AND status='retrying'",
+            params![id],
+        )? as i64;
+    }
+
+    let payload = json!({
+        "timestamp": now,
+        "matched": targets.len(),
+        "updated": updated,
+        "job_ids": targets
+    });
+    print_payload(args.json, payload, "Scheduler run completed.")
 }
 
 fn repo_list(args: RepoListArgs) -> Result<(), CliError> {
@@ -5118,5 +5173,11 @@ mod tests {
         let (backoff, next_at) = compute_worker_retry_schedule(false, true, 3, 1000, 900);
         assert_eq!(backoff, 0);
         assert_eq!(next_at, 900);
+    }
+
+    #[test]
+    fn validate_job_scheduler_run_args_rejects_zero_limit() {
+        let err = validate_job_scheduler_run_limit(0).unwrap_err();
+        assert!(matches!(err, CliError::Usage(_)));
     }
 }

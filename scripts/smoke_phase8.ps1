@@ -59,6 +59,7 @@ Invoke-CargoStrict @('run','--','job','list','--json','--limit','5')
 Invoke-CargoStrict @('run','--','job','list','--json','--status','success','--limit','5')
 Invoke-CargoStrict @('run','--','job','list','--json','--status','failed','--limit','5')
 Invoke-CargoStrict @('run','--','job','retry','--id',"$($failedJob.job_id)",'--json')
+Invoke-CargoStrict @('run','--','job','scheduler-run','--json','--limit','5')
 
 Write-Host '[phase8-smoke] expected validation/security checks'
 $expectedFailures = @(
