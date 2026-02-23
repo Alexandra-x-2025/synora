@@ -24,7 +24,7 @@
 </head>
 <body class="min-h-screen antialiased">
   <div class="bg-grid" aria-hidden="true"></div>
-  <main class="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-7 sm:px-6">
+  <main class="relative z-10 mx-auto max-w-5xl px-4 pb-10 pt-7 sm:px-6">
     <header class="mb-4 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2.5">
         <span class="h-3 w-3 rounded-full bg-gradient-to-br from-teal-700 to-teal-400"></span>
@@ -37,32 +37,21 @@
       </div>
     </header>
 
-    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-emerald-100">
+    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/80 p-4 shadow-sm ring-1 ring-emerald-100">
       <label id="queryLabel" for="queryInput" class="mb-2 block text-sm font-semibold">搜索关键词</label>
       <div class="flex flex-col gap-2 sm:flex-row">
         <input id="queryInput" type="text" value="PowerToys" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-teal-600" />
-        <button id="searchCmdBtn" class="rounded-lg bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">生成搜索命令</button>
-        <button id="liveSearchBtn" class="rounded-lg bg-slate-800 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">实时搜索</button>
+        <button id="liveSearchBtn" class="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">实时搜索</button>
       </div>
-      <p id="searchCmdOut" class="mt-2 min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
       <p id="liveSearchMeta" class="mt-1 text-sm text-stone-500"></p>
     </section>
 
-    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-orange-100">
-      <div class="mb-2.5 flex items-center justify-between gap-2">
-        <h2 id="payloadTitle" class="m-0 text-base font-semibold">粘贴 `ui search --json` 输出</h2>
-        <button id="renderBtn" class="rounded-lg bg-orange-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">渲染结果</button>
-      </div>
-      <textarea id="payloadInput" spellcheck="false" aria-label="JSON payload" class="min-h-56 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-orange-700"></textarea>
-      <p id="payloadErr" class="mt-2 min-h-4 text-sm text-red-800"></p>
-    </section>
-
-    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-zinc-200">
+    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/80 p-3.5 shadow-sm ring-1 ring-zinc-200">
       <div class="mb-2.5 flex items-center justify-between gap-2">
         <h2 id="groupTitle" class="m-0 text-base font-semibold">结果分组</h2>
         <span id="resultMeta" class="text-sm text-stone-500"></span>
       </div>
-      <div class="mb-3 flex flex-wrap items-end gap-2">
+      <div class="mb-3 hidden flex-wrap items-end gap-2" id="filterBar">
         <label id="riskLabel" class="text-xs text-stone-600">
           风险等级
           <select id="riskFilter" class="mt-1 block rounded-md border border-stone-300 bg-white px-2 py-1 text-sm">
@@ -87,20 +76,35 @@
       <div id="groupsRoot" class="grid gap-3"></div>
     </section>
 
-    <section class="rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm">
-      <h2 id="actionTitle" class="m-0 text-base font-semibold">动作命令</h2>
-      <p id="actionHint" class="mb-2 mt-1 text-sm text-stone-500">点击任意结果卡片生成命令。</p>
-      <p id="actionCmdOut" class="min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button id="runActionBtn" class="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">通过 API 执行动作</button>
-        <button id="copyActionBtn" class="rounded-lg bg-stone-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">复制命令</button>
-        <span id="actionRunMeta" class="text-sm text-stone-500"></span>
+    <details class="rounded-xl border border-stone-300 bg-white/70 p-3.5 shadow-sm">
+      <summary id="advancedTitle" class="cursor-pointer text-sm font-semibold text-stone-700">高级（开发调试）</summary>
+      <div class="mt-3 grid gap-3">
+        <section class="rounded-lg border border-stone-300 bg-amber-50/70 p-3">
+          <div class="mb-2.5 flex items-center justify-between gap-2">
+            <h2 id="payloadTitle" class="m-0 text-base font-semibold">粘贴 `ui search --json` 输出</h2>
+            <button id="renderBtn" class="rounded-lg bg-orange-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">渲染结果</button>
+          </div>
+          <textarea id="payloadInput" spellcheck="false" aria-label="JSON payload" class="min-h-48 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-orange-700"></textarea>
+          <p id="payloadErr" class="mt-2 min-h-4 text-sm text-red-800"></p>
+        </section>
+        <section class="rounded-lg border border-stone-300 bg-amber-50/70 p-3">
+          <h2 id="actionTitle" class="m-0 text-base font-semibold">动作命令</h2>
+          <p id="actionHint" class="mb-2 mt-1 text-sm text-stone-500">点击任意结果卡片生成命令。</p>
+          <p id="actionCmdOut" class="min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button id="runActionBtn" class="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">通过 API 执行动作</button>
+            <button id="searchCmdBtn" class="rounded-lg bg-teal-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">生成搜索命令</button>
+            <button id="copyActionBtn" class="rounded-lg bg-stone-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">复制命令</button>
+            <span id="actionRunMeta" class="text-sm text-stone-500"></span>
+          </div>
+          <p id="searchCmdOut" class="mt-2 min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+          <div class="mt-4">
+            <h3 id="historyTitle" class="m-0 text-sm font-semibold">最近命令</h3>
+            <div id="historyRoot" class="mt-2 grid gap-2"></div>
+          </div>
+        </section>
       </div>
-      <div class="mt-4">
-        <h3 id="historyTitle" class="m-0 text-sm font-semibold">最近命令</h3>
-        <div id="historyRoot" class="mt-2 grid gap-2"></div>
-      </div>
-    </section>
+    </details>
   </main>
 
   <script src="./app.js"></script>

@@ -62,6 +62,7 @@ Synora 是一个本地优先、AI 驱动的软件操作系统管理器，目标�
 4. 在 Live 模式下，可直接点击 `Live Search` 与 `Run Action via API`。
 5. 支持按 `risk/group` 过滤结果，并记录最近命令历史（localStorage）。
 6. 右上角可切换 `中文 / EN`，页面文案与运行提示会同步切换（localStorage 持久化）。
+7. 默认展示“简化模式”（搜索+结果+一键执行）；命令与 JSON 调试入口在“高级（开发调试）”折叠区。
 
 ## 当前可用命令矩阵
 - `config`

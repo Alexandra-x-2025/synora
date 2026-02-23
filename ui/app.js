@@ -17,6 +17,7 @@ const actionRunMeta = document.getElementById("actionRunMeta");
 const historyRoot = document.getElementById("historyRoot");
 const langZhBtn = document.getElementById("langZhBtn");
 const langEnBtn = document.getElementById("langEnBtn");
+const advancedTitle = document.getElementById("advancedTitle");
 
 const HISTORY_KEY = "synora_ui_cmd_history_v1";
 const HISTORY_MAX = 12;
@@ -41,6 +42,7 @@ const I18N = {
     runActionBtn: "通过 API 执行动作",
     copyActionBtn: "复制命令",
     historyTitle: "最近命令",
+    advancedTitle: "高级（开发调试）",
     queryPlaceholder: "输入关键词，如 PowerToys",
     payloadPlaceholder: "粘贴 ui search --json 的完整输出",
     riskOptions: {
@@ -92,7 +94,8 @@ const I18N = {
     labels: {
       risk: "风险",
       confidence: "置信度",
-      copy: "复制"
+      copy: "复制",
+      execute: "执行"
     }
   },
   en: {
@@ -111,6 +114,7 @@ const I18N = {
     runActionBtn: "Run Action via API",
     copyActionBtn: "Copy Command",
     historyTitle: "Recent Commands",
+    advancedTitle: "Advanced (Developer)",
     queryPlaceholder: "Type keyword, e.g. PowerToys",
     payloadPlaceholder: "Paste full JSON output from ui search --json",
     riskOptions: {
@@ -150,6 +154,7 @@ const I18N = {
       actionNonJsonError: "Action endpoint returned a non-JSON response.",
       actionFail: "Action failed (exit {code})",
       actionOk: "Action executed.",
+      actionNeedConfirm: "This action is high risk and needs confirmation. Continue?",
       actionException: "Action exception: {msg}",
       unnamed: "(Untitled)",
       noHistory: "No command history yet.",
@@ -162,7 +167,8 @@ const I18N = {
     labels: {
       risk: "risk",
       confidence: "conf",
-      copy: "Copy"
+      copy: "Copy",
+      execute: "Run"
     }
   }
 };
@@ -254,6 +260,7 @@ function applyLanguage() {
   setText("runActionBtn", dict.runActionBtn);
   setText("copyActionBtn", dict.copyActionBtn);
   setText("historyTitle", dict.historyTitle);
+  setText("advancedTitle", dict.advancedTitle);
 
   queryInput.placeholder = dict.queryPlaceholder;
   payloadInput.placeholder = dict.payloadPlaceholder;
@@ -414,6 +421,48 @@ async function runActionViaApi() {
   }
 }
 
+async function runActionWithId(actionId, riskLevel) {
+  const confirmNeeded = riskLevel === "high";
+  if (confirmNeeded) {
+    const ok = window.confirm(
+      currentLang === "zh"
+        ? "该动作是高风险操作，需要确认后执行，是否继续？"
+        : t().prompts.actionNeedConfirm
+    );
+    if (!ok) return;
+  }
+
+  const cmd = makeActionCmd(actionId, riskLevel);
+  actionCmdOut.textContent = cmd;
+  pushHistory(cmd);
+  actionRunMeta.textContent = t().prompts.actionRunning;
+
+  try {
+    const res = await fetch("/api/action-run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: actionId, confirm: confirmNeeded })
+    });
+    const raw = await res.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(raw);
+    } catch (_e) {
+      const looksHtml = raw.trim().startsWith("<!DOCTYPE") || raw.trim().startsWith("<html");
+      actionRunMeta.textContent = looksHtml ? t().prompts.actionHtmlError : t().prompts.actionNonJsonError;
+      return;
+    }
+    if (!payload.ok) {
+      const code = payload.exit_code ?? "?";
+      actionRunMeta.textContent = fmt(t().prompts.actionFail, { code });
+      return;
+    }
+    actionRunMeta.textContent = t().prompts.actionOk;
+  } catch (e) {
+    actionRunMeta.textContent = fmt(t().prompts.actionException, { msg: e.message });
+  }
+}
+
 function render(payload) {
   currentPayload = payload;
   const groups = Array.isArray(payload.groups) ? payload.groups : [];
@@ -481,9 +530,24 @@ function render(payload) {
 
       chips.appendChild(riskChip);
       chips.appendChild(confChip);
+
+      const actions = document.createElement("div");
+      actions.className = "mt-2";
+      const runBtn = document.createElement("button");
+      runBtn.type = "button";
+      runBtn.className = "rounded-md bg-teal-700 px-2.5 py-1 text-xs font-semibold text-white transition hover:brightness-95";
+      runBtn.textContent = t().labels.execute;
+      runBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        runActionWithId(item.action_id, item.risk_level || "low");
+      });
+      actions.appendChild(runBtn);
+
       btn.appendChild(tNode);
       btn.appendChild(s);
       btn.appendChild(chips);
+      btn.appendChild(actions);
       card.appendChild(btn);
       list.appendChild(card);
     });
