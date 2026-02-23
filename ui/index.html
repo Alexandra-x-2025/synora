@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Synora UI Start</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Space Grotesk", "system-ui", "sans-serif"],
+            mono: ["IBM Plex Mono", "ui-monospace", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="min-h-screen antialiased">
+  <div class="bg-grid" aria-hidden="true"></div>
+  <main class="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-7 sm:px-6">
+    <header class="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="h-3 w-3 rounded-full bg-gradient-to-br from-teal-700 to-teal-400"></span>
+        <h1 class="m-0 text-xl font-bold tracking-tight">Synora UI Start</h1>
+      </div>
+      <p class="m-0 text-sm text-stone-500">Phase 9 UI bootstrap for `ui search` / `ui action-run`</p>
+    </header>
+
+    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-emerald-100">
+      <label for="queryInput" class="mb-2 block text-sm font-semibold">Search Query</label>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <input id="queryInput" type="text" value="PowerToys" class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-teal-600" />
+        <button id="searchCmdBtn" class="rounded-lg bg-teal-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Build Search Command</button>
+      </div>
+      <p id="searchCmdOut" class="mt-2 min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+    </section>
+
+    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-orange-100">
+      <div class="mb-2.5 flex items-center justify-between gap-2">
+        <h2 class="m-0 text-base font-semibold">Paste `ui search --json` Payload</h2>
+        <button id="renderBtn" class="rounded-lg bg-orange-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Render Results</button>
+      </div>
+      <textarea id="payloadInput" spellcheck="false" aria-label="JSON payload" class="min-h-56 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2.5 font-mono text-sm outline-none focus:border-orange-700"></textarea>
+      <p id="payloadErr" class="mt-2 min-h-4 text-sm text-red-800"></p>
+    </section>
+
+    <section class="mb-3 rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm ring-1 ring-zinc-200">
+      <div class="mb-2.5 flex items-center justify-between gap-2">
+        <h2 class="m-0 text-base font-semibold">Result Groups</h2>
+        <span id="resultMeta" class="text-sm text-stone-500"></span>
+      </div>
+      <div id="groupsRoot" class="grid gap-3"></div>
+    </section>
+
+    <section class="rounded-xl border border-stone-300 bg-amber-50/70 p-3.5 shadow-sm">
+      <h2 class="m-0 text-base font-semibold">Action Command</h2>
+      <p class="mb-2 mt-1 text-sm text-stone-500">Click any result card to generate a command.</p>
+      <p id="actionCmdOut" class="min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

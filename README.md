@@ -44,6 +44,19 @@ Synora 是一个本地优先、AI 驱动的软件操作系统管理器，目标�
 4. 来源建议：`cargo run -- source suggest --json --limit 20`。
 5. 完整回归：见 `docs/CLI_SMOKE_TESTS.md`。
 
+## UI 起步（Phase 9）
+仓库已提供最小 UI 原型：`ui/`（静态 HTML/CSS/JS）。
+当前已接入 TailwindCSS（CDN 方式），无需额外前端构建步骤。
+
+本地打开方式（任选其一）：
+1. 直接打开 `ui/index.html`
+2. 在仓库根目录执行 `python -m http.server 8080`，然后访问 `http://localhost:8080/ui/`
+
+使用方式：
+1. 在页面输入查询，生成 `ui search` 命令。
+2. 将 `cargo run -- ui search --q "<query>" --json` 的输出粘贴到页面中。
+3. 点击结果卡片，页面会生成对应 `ui action-run` 命令（高风险自动带 `--confirm`）。
+
 ## 当前可用命令矩阵
 - `config`
 1. `config init`
