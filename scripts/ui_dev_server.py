@@ -87,9 +87,6 @@ class SynoraUiHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path != "/api/action-run":
-            self.send_error(404)
-            return
         length = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(length).decode("utf-8") if length > 0 else ""
         try:
@@ -97,35 +94,89 @@ class SynoraUiHandler(SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self._json(400, {"error": "invalid json body"})
             return
-        action_id = str(body.get("id", "")).strip()
-        confirm = bool(body.get("confirm", False))
-        if not action_id:
-            self._json(400, {"error": "--id is required"})
+
+        if parsed.path == "/api/action-run":
+            action_id = str(body.get("id", "")).strip()
+            confirm = bool(body.get("confirm", False))
+            if not action_id:
+                self._json(400, {"error": "--id is required"})
+                return
+            args = ["ui", "action-run", "--id", action_id, "--json"]
+            if confirm:
+                args.insert(4, "--confirm")
+            code, stdout, stderr, cmd = run_synora(args)
+            if code != 0:
+                self._json(
+                    200,
+                    {
+                        "ok": False,
+                        "command": cmd,
+                        "stderr": stderr,
+                        "exit_code": code,
+                    },
+                )
+                return
+            try:
+                payload = json.loads(stdout)
+            except json.JSONDecodeError:
+                self._json(
+                    500,
+                    {"ok": False, "error": "invalid json from synora", "stdout": stdout},
+                )
+                return
+            self._json(200, {"ok": True, "result": payload, "exit_code": code})
             return
-        args = ["ui", "action-run", "--id", action_id, "--json"]
-        if confirm:
-            args.insert(4, "--confirm")
-        code, stdout, stderr, cmd = run_synora(args)
-        if code != 0:
-            self._json(
-                200,
-                {
-                    "ok": False,
-                    "command": cmd,
-                    "stderr": stderr,
-                    "exit_code": code,
-                },
-            )
+
+        if parsed.path == "/api/op":
+            op = str(body.get("op", "")).strip()
+            payload = body.get("payload") if isinstance(body.get("payload"), dict) else {}
+            op_args = {
+                "update_check": ["update", "check", "--json", "--limit", "20"],
+                "discover_scan": ["software", "discover", "scan", "--json"],
+                "repo_sync": ["repo", "sync", "--json"],
+                "ai_analyze": ["ai", "analyze", "--json"],
+                "ai_recommend": [
+                    "ai",
+                    "recommend",
+                    "--goal",
+                    str(payload.get("goal", "Rust development workstation")),
+                    "--json",
+                ],
+                "ai_repair_plan": [
+                    "ai",
+                    "repair-plan",
+                    "--software",
+                    str(payload.get("software", "PowerToys")),
+                    "--issue",
+                    str(payload.get("issue", "crash on launch after update")),
+                    "--json",
+                ],
+            }
+            args = op_args.get(op)
+            if not args:
+                self._json(400, {"error": "unknown op"})
+                return
+            code, stdout, stderr, cmd = run_synora(args)
+            if code != 0:
+                self._json(
+                    200,
+                    {
+                        "ok": False,
+                        "command": cmd,
+                        "stderr": stderr,
+                        "exit_code": code,
+                    },
+                )
+                return
+            parsed_result = None
+            try:
+                parsed_result = json.loads(stdout) if stdout else None
+            except json.JSONDecodeError:
+                parsed_result = {"raw": stdout}
+            self._json(200, {"ok": True, "result": parsed_result, "exit_code": code, "command": cmd})
             return
-        try:
-            payload = json.loads(stdout)
-        except json.JSONDecodeError:
-            self._json(
-                500,
-                {"ok": False, "error": "invalid json from synora", "stdout": stdout},
-            )
-            return
-        self._json(200, {"ok": True, "result": payload, "exit_code": code})
+
+        self.send_error(404)
 
 
 def main():
@@ -133,7 +184,7 @@ def main():
     os.chdir(UI_DIR)
     server = ThreadingHTTPServer(("127.0.0.1", port), SynoraUiHandler)
     print(f"[synora-ui] serving ui at http://127.0.0.1:{port}")
-    print("[synora-ui] api: GET /api/search?q=<query>, POST /api/action-run")
+    print("[synora-ui] api: GET /api/search?q=<query>, POST /api/action-run, POST /api/op")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -8,35 +8,61 @@ const toggleFilterBtn = document.getElementById("toggleFilterBtn");
 const payloadInput = document.getElementById("payloadInput");
 const renderBtn = document.getElementById("renderBtn");
 const payloadErr = document.getElementById("payloadErr");
-const capabilityRoot = document.getElementById("capabilityRoot");
-const capabilityMeta = document.getElementById("capabilityMeta");
 const groupsRoot = document.getElementById("groupsRoot");
 const emptyState = document.getElementById("emptyState");
 const resultMeta = document.getElementById("resultMeta");
 const actionRunMeta = document.getElementById("actionRunMeta");
+const quickActionMeta = document.getElementById("quickActionMeta");
+
 const langZhBtn = document.getElementById("langZhBtn");
 const langEnBtn = document.getElementById("langEnBtn");
+const openSettingsBtn = document.getElementById("openSettingsBtn");
+const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
 const advancedTitle = document.getElementById("advancedTitle");
+
+const opButtons = document.querySelectorAll(".op-btn");
 const quickQueryButtons = document.querySelectorAll(".quick-query");
 
+const settingInputs = {
+  auto_update: document.getElementById("settingAutoUpdate"),
+  signature_check: document.getElementById("settingSignature"),
+  source_allowlist: document.getElementById("settingAllowlist"),
+  audit_enabled: document.getElementById("settingAudit"),
+  scheduler_enabled: document.getElementById("settingScheduler"),
+  worker_enabled: document.getElementById("settingWorker")
+};
+
 const LANG_KEY = "synora_ui_lang_v1";
+const SETTINGS_KEY = "synora_ui_settings_v1";
 let currentPayload = null;
 let currentLang = localStorage.getItem(LANG_KEY) || "zh";
 
 const I18N = {
   zh: {
     title: "Synora 中文界面",
-    subtitle: "Phase 9：搜索与操作按钮界面",
+    subtitle: "Phase 9：前台操作 + 设置分层",
     queryLabel: "搜索关键词",
     liveSearchBtn: "实时搜索",
     payloadTitle: "粘贴 `ui search --json` 输出",
     renderBtn: "渲染结果",
-    capabilityTitle: "功能总览",
-    capabilitySubtitle: "当前版本可用能力（按分类展示）",
     groupTitle: "结果分组",
     riskLabel: "风险等级",
     typeLabel: "分组类型",
     advancedTitle: "高级（开发调试）",
+    quickActionTitle: "快捷操作",
+    quickActionSubtitle: "常用动作按钮，点击后由后端执行",
+    settingsBtn: "设置",
+    settingsTitle: "设置",
+    settingsSubtitle: "策略与系统参数（默认隐藏）",
+    closeBtn: "关闭",
+    settingAutoUpdateLabel: "轻量定时更新检测",
+    settingSignatureLabel: "签名校验",
+    settingAllowlistLabel: "来源白名单",
+    settingAuditLabel: "审计记录",
+    settingSchedulerLabel: "Scheduler 定时入队",
+    settingWorkerLabel: "Worker 执行器",
+    settingDiscoveryScope: "Discovery 范围：Registry-only（只读）",
     queryPlaceholder: "输入关键词，如 PowerToys",
     payloadPlaceholder: "粘贴 ui search --json 的完整输出",
     riskOptions: { all: "全部", low: "低", medium: "中", high: "高" },
@@ -56,12 +82,13 @@ const I18N = {
       ai: "AI",
       unknown: "未知"
     },
-    capabilityGroups: {
-      operations: "核心操作",
-      security: "安全与治理",
-      ai: "AI 能力",
-      jobs: "任务系统",
-      product: "产品入口与仓库"
+    actionButtons: {
+      update_check: "检测可更新软件",
+      discover_scan: "软件自动发现",
+      repo_sync: "同步软件仓库",
+      ai_analyze: "AI 整理分析",
+      ai_recommend: "AI 安装建议",
+      ai_repair_plan: "AI 修复方案"
     },
     prompts: {
       enterQuery: "请输入搜索关键词。",
@@ -71,20 +98,23 @@ const I18N = {
       liveFailed: "实时搜索失败。",
       liveOk: "实时搜索成功：分组数={groups}",
       liveException: "实时搜索异常：{msg}",
-      actionRunning: "执行中...",
-      actionHtmlError: "动作接口返回 HTML。请先启动 ui_dev_server.py。",
-      actionNonJsonError: "动作接口返回了非 JSON 响应。",
-      actionFail: "动作失败（exit {code}）",
-      actionOk: "动作执行成功。",
-      actionNeedConfirm: "该动作是高风险操作，需要确认后执行，是否继续？",
-      actionException: "动作执行异常：{msg}",
-      unnamed: "（未命名）",
-      invalidJson: "JSON 无效：{msg}",
+      filters: "筛选",
       resultMeta: "关键词=\"{query}\" | 分组={count}",
       resultEmpty: "没有找到匹配结果，换个关键词试试。",
-      filters: "筛选",
-      capabilityMeta: "总计 {count} 项",
-      statusAvailable: "已支持"
+      actionRunning: "执行中...",
+      actionNeedConfirm: "该动作是高风险操作，需要确认后执行，是否继续？",
+      actionOk: "动作执行成功。",
+      actionFail: "动作失败（exit {code}）",
+      actionException: "动作执行异常：{msg}",
+      actionNonJsonError: "动作接口返回了非 JSON 响应。",
+      actionHtmlError: "动作接口返回 HTML。请先启动 ui_dev_server.py。",
+      opRunning: "正在执行：{name}",
+      opOk: "完成：{name}",
+      opFail: "失败：{name}（exit {code}）",
+      opException: "操作异常：{msg}",
+      opNonJsonError: "操作接口返回了非 JSON 响应。",
+      opHtmlError: "操作接口返回 HTML。请先启动 ui_dev_server.py。",
+      settingsSaved: "设置已保存。"
     },
     labels: {
       risk: "风险",
@@ -94,17 +124,28 @@ const I18N = {
   },
   en: {
     title: "Synora UI",
-    subtitle: "Phase 9: search and action buttons",
+    subtitle: "Phase 9: actions in front, settings by policy",
     queryLabel: "Search Query",
     liveSearchBtn: "Live Search",
     payloadTitle: "Paste `ui search --json` Payload",
     renderBtn: "Render Results",
-    capabilityTitle: "Feature Overview",
-    capabilitySubtitle: "Capabilities available in current version",
     groupTitle: "Result Groups",
     riskLabel: "Risk Level",
     typeLabel: "Group Type",
     advancedTitle: "Advanced (Developer)",
+    quickActionTitle: "Quick Actions",
+    quickActionSubtitle: "Common actions, executed by backend",
+    settingsBtn: "Settings",
+    settingsTitle: "Settings",
+    settingsSubtitle: "Policy and system parameters",
+    closeBtn: "Close",
+    settingAutoUpdateLabel: "Lightweight scheduled update detection",
+    settingSignatureLabel: "Signature verification",
+    settingAllowlistLabel: "Source allowlist",
+    settingAuditLabel: "Audit logs",
+    settingSchedulerLabel: "Scheduler timed enqueue",
+    settingWorkerLabel: "Worker executor",
+    settingDiscoveryScope: "Discovery scope: Registry-only (read-only)",
     queryPlaceholder: "Type keyword, e.g. PowerToys",
     payloadPlaceholder: "Paste full JSON output from ui search --json",
     riskOptions: { all: "All", low: "Low", medium: "Medium", high: "High" },
@@ -124,12 +165,13 @@ const I18N = {
       ai: "AI",
       unknown: "Unknown"
     },
-    capabilityGroups: {
-      operations: "Core Operations",
-      security: "Security & Governance",
-      ai: "AI Capabilities",
-      jobs: "Task System",
-      product: "Entry & Repositories"
+    actionButtons: {
+      update_check: "Check Updates",
+      discover_scan: "Run Discovery",
+      repo_sync: "Sync Repositories",
+      ai_analyze: "AI Analyze",
+      ai_recommend: "AI Recommend",
+      ai_repair_plan: "AI Repair Plan"
     },
     prompts: {
       enterQuery: "Please enter a query.",
@@ -139,81 +181,29 @@ const I18N = {
       liveFailed: "Live search failed.",
       liveOk: "Live search succeeded: groups={groups}",
       liveException: "Live search exception: {msg}",
-      actionRunning: "Running...",
-      actionHtmlError: "Action endpoint returned HTML. Start ui_dev_server.py first.",
-      actionNonJsonError: "Action endpoint returned a non-JSON response.",
-      actionFail: "Action failed (exit {code})",
-      actionOk: "Action executed.",
-      actionNeedConfirm: "This action is high risk and needs confirmation. Continue?",
-      actionException: "Action exception: {msg}",
-      unnamed: "(Untitled)",
-      invalidJson: "Invalid JSON: {msg}",
+      filters: "Filters",
       resultMeta: "query=\"{query}\" | groups={count}",
       resultEmpty: "No matching results. Try another query.",
-      filters: "Filters",
-      capabilityMeta: "{count} features",
-      statusAvailable: "Available"
+      actionRunning: "Running...",
+      actionNeedConfirm: "This action is high risk and needs confirmation. Continue?",
+      actionOk: "Action executed.",
+      actionFail: "Action failed (exit {code})",
+      actionException: "Action exception: {msg}",
+      actionNonJsonError: "Action endpoint returned a non-JSON response.",
+      actionHtmlError: "Action endpoint returned HTML. Start ui_dev_server.py first.",
+      opRunning: "Running: {name}",
+      opOk: "Completed: {name}",
+      opFail: "Failed: {name} (exit {code})",
+      opException: "Operation exception: {msg}",
+      opNonJsonError: "Operation endpoint returned non-JSON.",
+      opHtmlError: "Operation endpoint returned HTML. Start ui_dev_server.py first.",
+      settingsSaved: "Settings saved."
     },
     labels: {
       risk: "risk",
       confidence: "conf",
       execute: "Run"
     }
-  }
-};
-
-const CAPABILITIES = [
-  { group: "operations", key: "install_upgrade_uninstall" },
-  { group: "operations", key: "updatable_detection" },
-  { group: "security", key: "download_source_checks" },
-  { group: "operations", key: "health_cleanup_repair" },
-  { group: "operations", key: "software_discovery_library" },
-  { group: "ai", key: "ai_analyze" },
-  { group: "ai", key: "ai_recommend" },
-  { group: "ai", key: "ai_repair_plan" },
-  { group: "jobs", key: "local_queue_worker" },
-  { group: "jobs", key: "scheduler_basics" },
-  { group: "jobs", key: "download_mvp" },
-  { group: "product", key: "global_search_ui" },
-  { group: "product", key: "repository_mvp" },
-  { group: "security", key: "security_gate_audit" },
-  { group: "operations", key: "registry_only_discovery" }
-];
-
-const CAPABILITY_TEXT = {
-  zh: {
-    install_upgrade_uninstall: "一键安装/升级/卸载能力",
-    updatable_detection: "可更新软件检测（手动触发或轻量定时）",
-    download_source_checks: "下载源基础安全校验（签名/来源/白名单）",
-    health_cleanup_repair: "软件体检、清理、修复最小安全子集",
-    software_discovery_library: "软件自动发现并生成个人软件库（Software Discovery）",
-    ai_analyze: "AI 软件整理分析（Analyze）",
-    ai_recommend: "AI 场景化安装建议（Recommend）",
-    ai_repair_plan: "AI 修复方案（Repair Plan，计划模式）",
-    local_queue_worker: "本地任务队列（SQLite）与 Worker 基础框架",
-    scheduler_basics: "Scheduler 基础能力（定时入队）",
-    download_mvp: "下载模块 MVP（受控下载 + 校验 + 审计）",
-    global_search_ui: "全局搜索 UI 主入口（Raycast 风格）",
-    repository_mvp: "软件仓库系统 MVP（公共仓库只读 + 个人仓库管理）",
-    security_gate_audit: "安全门禁与审计链路可用",
-    registry_only_discovery: "Discovery 范围：Registry-only（已决策）"
-  },
-  en: {
-    install_upgrade_uninstall: "One-click install / upgrade / uninstall",
-    updatable_detection: "Updatable software detection (manual or lightweight schedule)",
-    download_source_checks: "Basic download source checks (signature/source/allowlist)",
-    health_cleanup_repair: "Software health check, cleanup, and minimal safe repair set",
-    software_discovery_library: "Auto software discovery and personal software inventory generation",
-    ai_analyze: "AI software analysis (Analyze)",
-    ai_recommend: "AI scenario-based install recommendations (Recommend)",
-    ai_repair_plan: "AI repair plan (plan-only mode)",
-    local_queue_worker: "Local task queue (SQLite) and worker foundation",
-    scheduler_basics: "Scheduler baseline capability (timed enqueue)",
-    download_mvp: "Download module MVP (controlled download + verification + audit)",
-    global_search_ui: "Global search UI entry (Raycast style)",
-    repository_mvp: "Repository system MVP (public read-only + personal management)",
-    security_gate_audit: "Security gate and audit chain available",
-    registry_only_discovery: "Discovery scope: Registry-only (decided)"
   }
 };
 
@@ -269,15 +259,33 @@ function applyLanguage() {
   setText("subtitleText", dict.subtitle);
   setText("queryLabel", dict.queryLabel);
   setText("liveSearchBtn", dict.liveSearchBtn);
+  setText("quickActionTitle", dict.quickActionTitle);
+  setText("quickActionSubtitle", dict.quickActionSubtitle);
+  setText("openSettingsBtn", dict.settingsBtn);
+  setText("settingsTitle", dict.settingsTitle);
+  setText("settingsSubtitle", dict.settingsSubtitle);
+  setText("closeSettingsBtn", dict.closeBtn);
+
+  setText("settingAutoUpdateLabel", dict.settingAutoUpdateLabel);
+  setText("settingSignatureLabel", dict.settingSignatureLabel);
+  setText("settingAllowlistLabel", dict.settingAllowlistLabel);
+  setText("settingAuditLabel", dict.settingAuditLabel);
+  setText("settingSchedulerLabel", dict.settingSchedulerLabel);
+  setText("settingWorkerLabel", dict.settingWorkerLabel);
+  setText("settingDiscoveryScope", dict.settingDiscoveryScope);
+
   setText("payloadTitle", dict.payloadTitle);
   setText("renderBtn", dict.renderBtn);
-  setText("capabilityTitle", dict.capabilityTitle);
-  setText("capabilitySubtitle", dict.capabilitySubtitle);
   setText("groupTitle", dict.groupTitle);
   setText("riskLabel", dict.riskLabel);
   setText("typeLabel", dict.typeLabel);
   setText("advancedTitle", dict.advancedTitle);
   setText("toggleFilterBtn", dict.prompts.filters);
+
+  opButtons.forEach((btn) => {
+    const op = btn.dataset.op;
+    btn.textContent = dict.actionButtons[op] || op;
+  });
 
   queryInput.placeholder = dict.queryPlaceholder;
   payloadInput.placeholder = dict.payloadPlaceholder;
@@ -292,7 +300,6 @@ function applyLanguage() {
   }
 
   setLangButtons();
-  renderCapabilities();
   if (currentPayload) render(currentPayload);
 }
 
@@ -300,6 +307,32 @@ function setLanguage(lang) {
   currentLang = lang === "en" ? "en" : "zh";
   localStorage.setItem(LANG_KEY, currentLang);
   applyLanguage();
+}
+
+function loadSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+  } catch (_e) {
+    return {};
+  }
+}
+
+function saveSettings() {
+  const data = {};
+  Object.entries(settingInputs).forEach(([key, el]) => {
+    data[key] = Boolean(el?.checked);
+  });
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(data));
+  quickActionMeta.textContent = t().prompts.settingsSaved;
+}
+
+function applySettingsToUi() {
+  const data = loadSettings();
+  Object.entries(settingInputs).forEach(([key, el]) => {
+    if (el && Object.prototype.hasOwnProperty.call(data, key)) {
+      el.checked = Boolean(data[key]);
+    }
+  });
 }
 
 function setSearchLoading(isLoading) {
@@ -312,51 +345,6 @@ function riskChipClass(risk) {
   if (risk === "high") return "text-red-800 border-red-300 bg-red-50";
   if (risk === "medium") return "text-amber-800 border-amber-300 bg-amber-50";
   return "text-green-800 border-green-300 bg-green-50";
-}
-
-function renderCapabilities() {
-  const dict = t();
-  capabilityRoot.innerHTML = "";
-  capabilityMeta.textContent = fmt(dict.prompts.capabilityMeta, { count: CAPABILITIES.length });
-
-  const grouped = {};
-  for (const item of CAPABILITIES) {
-    if (!grouped[item.group]) grouped[item.group] = [];
-    grouped[item.group].push(item);
-  }
-
-  Object.keys(grouped).forEach((groupKey) => {
-    const wrap = document.createElement("section");
-    wrap.className = "rounded-lg border border-stone-300 bg-white";
-
-    const head = document.createElement("div");
-    head.className = "border-b border-stone-300 bg-stone-100 px-3 py-2 text-sm font-semibold";
-    head.textContent = dict.capabilityGroups[groupKey] || groupKey;
-
-    const list = document.createElement("div");
-    list.className = "grid gap-2 p-2.5";
-
-    grouped[groupKey].forEach((item) => {
-      const row = document.createElement("div");
-      row.className = "flex items-start justify-between gap-2 rounded-md border border-stone-200 bg-white px-2 py-2";
-
-      const text = document.createElement("div");
-      text.className = "text-sm text-stone-700";
-      text.textContent = CAPABILITY_TEXT[currentLang]?.[item.key] || item.key;
-
-      const badge = document.createElement("span");
-      badge.className = "whitespace-nowrap rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800";
-      badge.textContent = dict.prompts.statusAvailable;
-
-      row.appendChild(text);
-      row.appendChild(badge);
-      list.appendChild(row);
-    });
-
-    wrap.appendChild(head);
-    wrap.appendChild(list);
-    capabilityRoot.appendChild(wrap);
-  });
 }
 
 async function runActionWithId(actionId, riskLevel) {
@@ -514,12 +502,56 @@ async function runLiveSearch() {
   }
 }
 
+function opPayload(op) {
+  const q = queryInput.value.trim();
+  if (op === "ai_recommend") {
+    return { goal: q || "Rust development workstation" };
+  }
+  if (op === "ai_repair_plan") {
+    return { software: q || "PowerToys", issue: "crash on launch after update" };
+  }
+  return {};
+}
+
+async function runQuickOp(op) {
+  const name = t().actionButtons[op] || op;
+  quickActionMeta.textContent = fmt(t().prompts.opRunning, { name });
+  try {
+    const res = await fetch("/api/op", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op, payload: opPayload(op) })
+    });
+    const raw = await res.text();
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (_e) {
+      const looksHtml = raw.trim().startsWith("<!DOCTYPE") || raw.trim().startsWith("<html");
+      quickActionMeta.textContent = looksHtml ? t().prompts.opHtmlError : t().prompts.opNonJsonError;
+      return;
+    }
+
+    if (!data.ok) {
+      quickActionMeta.textContent = fmt(t().prompts.opFail, { name, code: data.exit_code ?? "?" });
+      return;
+    }
+
+    quickActionMeta.textContent = fmt(t().prompts.opOk, { name });
+
+    if (op === "ai_recommend" || op === "ai_analyze" || op === "ai_repair_plan") {
+      // Keep a visible echo of backend json in advanced panel
+      if (data.result) payloadInput.value = JSON.stringify(data.result, null, 2);
+    }
+  } catch (e) {
+    quickActionMeta.textContent = fmt(t().prompts.opException, { msg: e.message });
+  }
+}
+
 liveSearchBtn.addEventListener("click", runLiveSearch);
 riskFilter.addEventListener("change", () => currentPayload && render(currentPayload));
 groupFilter.addEventListener("change", () => currentPayload && render(currentPayload));
-toggleFilterBtn.addEventListener("click", () => {
-  filterBar.classList.toggle("hidden");
-});
+toggleFilterBtn.addEventListener("click", () => filterBar.classList.toggle("hidden"));
 queryInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") runLiveSearch();
 });
@@ -529,6 +561,16 @@ quickQueryButtons.forEach((btn) => {
     runLiveSearch();
   });
 });
+opButtons.forEach((btn) => {
+  btn.addEventListener("click", () => runQuickOp(btn.dataset.op));
+});
+
+openSettingsBtn.addEventListener("click", () => settingsPanel.classList.remove("hidden"));
+closeSettingsBtn.addEventListener("click", () => settingsPanel.classList.add("hidden"));
+Object.values(settingInputs).forEach((el) => {
+  el.addEventListener("change", saveSettings);
+});
+
 renderBtn.addEventListener("click", () => {
   payloadErr.textContent = "";
   let parsed;
@@ -540,9 +582,11 @@ renderBtn.addEventListener("click", () => {
   }
   render(parsed);
 });
+
 langZhBtn.addEventListener("click", () => setLanguage("zh"));
 langEnBtn.addEventListener("click", () => setLanguage("en"));
 
 payloadInput.value = JSON.stringify(examplePayload, null, 2);
+applySettingsToUi();
 render(examplePayload);
 applyLanguage();
