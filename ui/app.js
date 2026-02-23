@@ -3,6 +3,8 @@ const searchCmdBtn = document.getElementById("searchCmdBtn");
 const liveSearchBtn = document.getElementById("liveSearchBtn");
 const searchCmdOut = document.getElementById("searchCmdOut");
 const liveSearchMeta = document.getElementById("liveSearchMeta");
+const riskFilter = document.getElementById("riskFilter");
+const groupFilter = document.getElementById("groupFilter");
 const payloadInput = document.getElementById("payloadInput");
 const renderBtn = document.getElementById("renderBtn");
 const payloadErr = document.getElementById("payloadErr");
@@ -10,7 +12,13 @@ const groupsRoot = document.getElementById("groupsRoot");
 const resultMeta = document.getElementById("resultMeta");
 const actionCmdOut = document.getElementById("actionCmdOut");
 const runActionBtn = document.getElementById("runActionBtn");
+const copyActionBtn = document.getElementById("copyActionBtn");
 const actionRunMeta = document.getElementById("actionRunMeta");
+const historyRoot = document.getElementById("historyRoot");
+
+const HISTORY_KEY = "synora_ui_cmd_history_v1";
+const HISTORY_MAX = 12;
+let currentPayload = null;
 
 const examplePayload = {
   query: "PowerToys",
@@ -54,13 +62,51 @@ const examplePayload = {
   ]
 };
 
-function makeSearchCmd() {
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+  } catch (_e) {
+    return [];
+  }
+}
+
+function saveHistory(items) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+}
+
+function pushHistory(cmd) {
+  const clean = String(cmd || "").trim();
+  if (!clean) return;
+  const existing = loadHistory().filter((x) => x.cmd !== clean);
+  existing.unshift({ cmd: clean, ts: Date.now() });
+  saveHistory(existing);
+  renderHistory();
+}
+
+function copyText(text) {
+  const clean = String(text || "").trim();
+  if (!clean) return Promise.resolve(false);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(clean).then(() => true).catch(() => false);
+  }
+  const ta = document.createElement("textarea");
+  ta.value = clean;
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(ta);
+  return Promise.resolve(ok);
+}
+
+function makeSearchCmd(record = true) {
   const q = queryInput.value.trim();
   if (!q) {
     searchCmdOut.textContent = "Query is required.";
     return;
   }
-  searchCmdOut.textContent = `cargo run -- ui search --q "${q.replaceAll('"', '\\"')}" --json`;
+  const cmd = `cargo run -- ui search --q "${q.replaceAll('"', '\\"')}" --json`;
+  searchCmdOut.textContent = cmd;
+  if (record) pushHistory(cmd);
 }
 
 async function runLiveSearch() {
@@ -69,6 +115,7 @@ async function runLiveSearch() {
     liveSearchMeta.textContent = "Query is required.";
     return;
   }
+  makeSearchCmd(false);
   liveSearchMeta.textContent = "Searching...";
   try {
     const url = `/api/search?q=${encodeURIComponent(q)}`;
@@ -92,6 +139,7 @@ async function runLiveSearch() {
       return;
     }
     payloadInput.value = JSON.stringify(payload, null, 2);
+    currentPayload = payload;
     render(payload);
     const groups = Array.isArray(payload.groups) ? payload.groups.length : 0;
     liveSearchMeta.textContent = `Live search ok: groups=${groups}`;
@@ -127,6 +175,7 @@ async function runActionViaApi() {
   }
   const actionId = match[1];
   const confirm = cmd.includes("--confirm");
+  pushHistory(cmd);
   actionRunMeta.textContent = "Running...";
   try {
     const res = await fetch("/api/action-run", {
@@ -157,11 +206,24 @@ async function runActionViaApi() {
 }
 
 function render(payload) {
+  currentPayload = payload;
   const groups = Array.isArray(payload.groups) ? payload.groups : [];
-  groupsRoot.innerHTML = "";
-  resultMeta.textContent = `query="${payload.query || ""}" | groups=${groups.length}`;
+  const risk = riskFilter.value;
+  const groupOnly = groupFilter.value;
+  const filteredGroups = groups
+    .filter((g) => groupOnly === "all" || g.type === groupOnly)
+    .map((g) => ({
+      ...g,
+      items: (Array.isArray(g.items) ? g.items : []).filter(
+        (it) => risk === "all" || (it.risk_level || "low") === risk
+      )
+    }))
+    .filter((g) => g.items.length > 0);
 
-  groups.forEach((group) => {
+  groupsRoot.innerHTML = "";
+  resultMeta.textContent = `query="${payload.query || ""}" | groups=${filteredGroups.length}`;
+
+  filteredGroups.forEach((group) => {
     const wrap = document.createElement("section");
     wrap.className = "overflow-hidden rounded-xl border border-stone-300 bg-white";
 
@@ -180,7 +242,9 @@ function render(payload) {
       btn.className = "w-full bg-transparent p-0 text-left text-inherit";
       btn.type = "button";
       btn.addEventListener("click", () => {
-        actionCmdOut.textContent = makeActionCmd(item.action_id, item.risk_level);
+        const cmd = makeActionCmd(item.action_id, item.risk_level);
+        actionCmdOut.textContent = cmd;
+        pushHistory(cmd);
       });
 
       const t = document.createElement("div");
@@ -217,8 +281,40 @@ function render(payload) {
   });
 }
 
+function renderHistory() {
+  historyRoot.innerHTML = "";
+  const items = loadHistory();
+  if (!items.length) {
+    const p = document.createElement("p");
+    p.className = "text-sm text-stone-500";
+    p.textContent = "No command history yet.";
+    historyRoot.appendChild(p);
+    return;
+  }
+  items.slice(0, 8).forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "flex flex-wrap items-center gap-2 rounded-lg border border-stone-300 bg-white px-2 py-1.5";
+    const code = document.createElement("code");
+    code.className = "min-w-[280px] flex-1 font-mono text-xs";
+    code.textContent = item.cmd;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "rounded-md bg-stone-800 px-2 py-1 text-xs font-semibold text-white";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", async () => {
+      const ok = await copyText(item.cmd);
+      actionRunMeta.textContent = ok ? "Copied." : "Copy failed.";
+    });
+    row.appendChild(code);
+    row.appendChild(btn);
+    historyRoot.appendChild(row);
+  });
+}
+
 searchCmdBtn.addEventListener("click", makeSearchCmd);
 liveSearchBtn.addEventListener("click", runLiveSearch);
+riskFilter.addEventListener("change", () => currentPayload && render(currentPayload));
+groupFilter.addEventListener("change", () => currentPayload && render(currentPayload));
 renderBtn.addEventListener("click", () => {
   payloadErr.textContent = "";
   let parsed;
@@ -231,7 +327,12 @@ renderBtn.addEventListener("click", () => {
   render(parsed);
 });
 runActionBtn.addEventListener("click", runActionViaApi);
+copyActionBtn.addEventListener("click", async () => {
+  const ok = await copyText(actionCmdOut.textContent);
+  actionRunMeta.textContent = ok ? "Copied." : "Nothing to copy.";
+});
 
 payloadInput.value = JSON.stringify(examplePayload, null, 2);
 makeSearchCmd();
 render(examplePayload);
+renderHistory();

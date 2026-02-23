@@ -60,6 +60,7 @@ Synora 是一个本地优先、AI 驱动的软件操作系统管理器，目标�
 2. 将 `cargo run -- ui search --q "<query>" --json` 的输出粘贴到页面中。
 3. 点击结果卡片，页面会生成对应 `ui action-run` 命令（高风险自动带 `--confirm`）。
 4. 在 Live 模式下，可直接点击 `Live Search` 与 `Run Action via API`。
+5. 支持按 `risk/group` 过滤结果，并记录最近命令历史（localStorage）。
 
 ## 当前可用命令矩阵
 - `config`

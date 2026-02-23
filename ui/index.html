@@ -58,6 +58,28 @@
         <h2 class="m-0 text-base font-semibold">Result Groups</h2>
         <span id="resultMeta" class="text-sm text-stone-500"></span>
       </div>
+      <div class="mb-3 flex flex-wrap items-end gap-2">
+        <label class="text-xs text-stone-600">
+          Risk
+          <select id="riskFilter" class="mt-1 block rounded-md border border-stone-300 bg-white px-2 py-1 text-sm">
+            <option value="all">all</option>
+            <option value="low">low</option>
+            <option value="medium">medium</option>
+            <option value="high">high</option>
+          </select>
+        </label>
+        <label class="text-xs text-stone-600">
+          Group
+          <select id="groupFilter" class="mt-1 block rounded-md border border-stone-300 bg-white px-2 py-1 text-sm">
+            <option value="all">all</option>
+            <option value="software">software</option>
+            <option value="source">source</option>
+            <option value="update">update</option>
+            <option value="download">download</option>
+            <option value="ai">ai</option>
+          </select>
+        </label>
+      </div>
       <div id="groupsRoot" class="grid gap-3"></div>
     </section>
 
@@ -67,7 +89,12 @@
       <p id="actionCmdOut" class="min-h-10 whitespace-pre-wrap rounded-lg border border-dashed border-stone-400 bg-stone-100 px-3 py-2 font-mono text-sm"></p>
       <div class="mt-2 flex flex-wrap gap-2">
         <button id="runActionBtn" class="rounded-lg bg-indigo-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Run Action via API</button>
+        <button id="copyActionBtn" class="rounded-lg bg-stone-700 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95">Copy Command</button>
         <span id="actionRunMeta" class="text-sm text-stone-500"></span>
+      </div>
+      <div class="mt-4">
+        <h3 class="m-0 text-sm font-semibold">Recent Commands</h3>
+        <div id="historyRoot" class="mt-2 grid gap-2"></div>
       </div>
     </section>
   </main>
